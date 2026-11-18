@@ -1,0 +1,868 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Hộp Tình Yêu 💕 Love Box Cloud</title>
+    <style>
+        :root {
+            --primary: #ff3b72;
+            --primary-dark: #e11d58;
+            --secondary: #7c3aed;
+            --bg-grad: linear-gradient(135deg, #fff0f5 0%, #ffe4ec 50%, #f3e8ff 100%);
+            --card: rgba(255, 255, 255, 0.94);
+            --text: #1f2937;
+            --muted: #6b7280;
+            --border: #fbcfe8;
+            --shadow: 0 12px 30px rgba(255, 59, 114, 0.14);
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+        body { background: var(--bg-grad); color: var(--text); min-height: 100vh; padding: 16px 12px 60px; overflow-x: hidden; position: relative; }
+
+        .heart-bg { position: fixed; inset: 0; pointer-events: none; z-index: 0; overflow: hidden; }
+        .heart { position: absolute; font-size: 16px; opacity: 0; animation: floatUp 9s linear infinite; }
+        @keyframes floatUp {
+            0% { transform: translateY(105vh) scale(0.7); opacity: 0; }
+            15% { opacity: 0.5; }
+            85% { opacity: 0.4; }
+            100% { transform: translateY(-10vh) scale(1.25); opacity: 0; }
+        }
+
+        .container { max-width: 940px; margin: 0 auto; position: relative; z-index: 1; }
+
+        /* Top Bar */
+        .topbar { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 16px; background: var(--card); padding: 12px 16px; border-radius: 16px; box-shadow: var(--shadow); border: 1px solid #fff; }
+        .brand { display: flex; align-items: center; gap: 10px; }
+        .brand h1 { font-size: 20px; font-weight: 800; color: var(--primary); letter-spacing: -0.3px; }
+        .box-badge { background: #fdf2f8; color: var(--primary-dark); border: 1px solid var(--border); padding: 4px 10px; border-radius: 999px; font-size: 12px; font-weight: 700; cursor: pointer; }
+        .top-actions { display: flex; gap: 8px; align-items: center; }
+        .btn-pill { border: 1px solid #e5e7eb; background: #fff; color: var(--text); padding: 7px 12px; border-radius: 999px; font-size: 12px; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 5px; transition: all 0.15s; }
+        .btn-pill:hover { border-color: var(--primary); color: var(--primary); }
+        .btn-pill.connected { background: #ecfdf5; color: #047857; border-color: #a7f3d0; }
+        .btn-pill.disconnected { background: #fffbeb; color: #b45309; border-color: #fde68a; }
+
+        /* Counter Card */
+        .counter-card { background: var(--card); border-radius: 20px; padding: 18px 16px; text-align: center; box-shadow: var(--shadow); margin-bottom: 18px; border: 2px dashed #f9a8d4; }
+        .couple-title { font-size: 17px; font-weight: 800; color: #be185d; margin-bottom: 10px; }
+        .counter-grid { display: flex; justify-content: center; gap: 10px; flex-wrap: wrap; }
+        .c-box { background: linear-gradient(135deg, #ff3b72, #fb7185); color: #fff; padding: 10px 14px; border-radius: 14px; min-width: 68px; box-shadow: 0 5px 12px rgba(255, 59, 114, 0.25); }
+        .c-val { font-size: 22px; font-weight: 800; line-height: 1.05; }
+        .c-lbl { font-size: 10px; text-transform: uppercase; opacity: 0.92; margin-top: 3px; }
+        .counter-sub { margin-top: 10px; font-size: 12px; color: var(--muted); }
+
+        /* Main Grid */
+        .grid { display: grid; grid-template-columns: 1fr 330px; gap: 18px; align-items: start; }
+        @media (max-width: 800px) { .grid { grid-template-columns: 1fr; } }
+
+        .card { background: var(--card); border-radius: 20px; padding: 20px; box-shadow: var(--shadow); border: 1px solid rgba(255,255,255,0.9); }
+        .card-title { font-size: 16px; font-weight: 700; color: var(--primary-dark); margin-bottom: 14px; display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+
+        /* Dropzone & Canvas Editor */
+        .dropzone { border: 2px dashed #f472b6; border-radius: 16px; padding: 20px; text-align: center; cursor: pointer; background: #fff9fb; transition: all 0.2s; }
+        .dropzone:hover { background: #fdf2f8; border-color: var(--primary); }
+        .dropzone input { display: none; }
+        .editor-wrap { display: none; margin-top: 14px; text-align: center; }
+        .canvas-frame { position: relative; display: inline-block; border-radius: 12px; overflow: hidden; border: 3px solid var(--primary); box-shadow: 0 8px 20px rgba(0,0,0,0.15); cursor: grab; touch-action: none; background: #111827; }
+        .canvas-frame:active { cursor: grabbing; }
+        #crop-canvas { display: block; width: 240px; height: 320px; }
+        .editor-tools { display: flex; justify-content: center; align-items: center; gap: 10px; margin-top: 10px; flex-wrap: wrap; }
+        .editor-tools input[type="range"] { width: 120px; accent-color: var(--primary); }
+        .btn-sm { padding: 6px 10px; font-size: 12px; font-weight: 600; border-radius: 8px; border: 1px solid #e5e7eb; background: #f9fafb; cursor: pointer; color: var(--text); }
+        .btn-sm:hover { background: #f3f4f6; }
+
+        .form-group { margin-top: 12px; text-align: left; }
+        .form-group label { display: block; font-size: 12px; font-weight: 700; color: #374151; margin-bottom: 5px; }
+        input[type="text"], input[type="password"], input[type="date"], input[type="number"], textarea, select {
+            width: 100%; padding: 10px 12px; border-radius: 10px; border: 1px solid #f3d1e2; font-size: 14px; background: #fff; outline: none; transition: border-color 0.2s;
+        }
+        input:focus, textarea:focus, select:focus { border-color: var(--primary); }
+        textarea { resize: vertical; min-height: 64px; }
+        .check-row { display: flex; align-items: center; gap: 8px; margin-top: 10px; font-size: 13px; color: #374151; cursor: pointer; }
+        .check-row input { width: 16px; height: 16px; accent-color: var(--primary); }
+
+        .btn-love { width: 100%; margin-top: 14px; padding: 13px; background: linear-gradient(135deg, #ff3b72, #e11d58); color: #fff; border: none; border-radius: 12px; font-size: 15px; font-weight: 700; cursor: pointer; box-shadow: 0 6px 16px rgba(225, 29, 88, 0.3); transition: transform 0.15s, opacity 0.15s; }
+        .btn-love:hover:not(:disabled) { transform: translateY(-1px); }
+        .btn-love:disabled { opacity: 0.6; cursor: not-allowed; }
+
+        /* ESP32 Wooden Box Mockup */
+        .box-mockup { width: 276px; margin: 0 auto; background: linear-gradient(145deg, #6f4835, #4d3022); border-radius: 22px; padding: 18px 18px 22px; box-shadow: 0 18px 35px rgba(77, 48, 34, 0.35), inset 0 2px 3px rgba(255,255,255,0.2); position: relative; border: 3px solid #3c2418; }
+        .box-led { width: 8px; height: 8px; border-radius: 50%; background: #10b981; box-shadow: 0 0 8px #10b981; position: absolute; top: 8px; right: 20px; }
+        .box-screen { width: 240px; height: 320px; background: #0f172a; border-radius: 6px; overflow: hidden; border: 3px solid #111; position: relative; display: flex; align-items: center; justify-content: center; }
+        .box-screen img { width: 240px; height: 320px; object-fit: cover; display: block; }
+        .box-empty { color: #94a3b8; font-size: 13px; text-align: center; padding: 20px; }
+        .box-meta { margin-top: 12px; font-size: 12px; color: var(--muted); text-align: center; }
+        .box-controls { display: flex; gap: 8px; margin-top: 12px; }
+        .box-controls button { flex: 1; }
+
+        /* Mode switch bar */
+        .mode-box { margin-top: 14px; background: #fdf2f8; border: 1px solid var(--border); padding: 10px 12px; border-radius: 12px; font-size: 12px; text-align: left; }
+
+        /* Album */
+        .album-card { margin-top: 18px; }
+        .album-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(126px, 1fr)); gap: 12px; }
+        .album-item { position: relative; aspect-ratio: 3/4; border-radius: 12px; overflow: hidden; cursor: pointer; border: 2px solid transparent; box-shadow: 0 4px 10px rgba(0,0,0,0.08); transition: transform 0.15s; background: #f3f4f6; }
+        .album-item:hover { transform: translateY(-2px); border-color: var(--primary); }
+        .album-item.active { border-color: var(--primary-dark); box-shadow: 0 0 0 3px rgba(255, 59, 114, 0.35); }
+        .album-item img { width: 100%; height: 100%; object-fit: cover; display: block; }
+        .album-del { position: absolute; top: 5px; right: 5px; width: 24px; height: 24px; border-radius: 50%; border: none; background: rgba(0,0,0,0.65); color: #fff; font-size: 12px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+        .album-del:hover { background: #dc2626; }
+        .album-cap { position: absolute; bottom: 0; left: 0; right: 0; background: linear-gradient(transparent, rgba(0,0,0,0.8)); color: #fff; font-size: 10px; padding: 12px 6px 5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+        /* Modal */
+        .modal-backdrop { position: fixed; inset: 0; background: rgba(17, 24, 39, 0.6); backdrop-filter: blur(3px); z-index: 50; display: none; align-items: center; justify-content: center; padding: 16px; }
+        .modal-backdrop.open { display: flex; }
+        .modal { background: #fff; border-radius: 20px; max-width: 460px; width: 100%; padding: 22px; box-shadow: 0 25px 50px rgba(0,0,0,0.25); max-height: 90vh; overflow-y: auto; }
+        .modal-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
+        .modal-head h2 { font-size: 18px; color: var(--primary-dark); }
+        .close-btn { border: none; background: #f3f4f6; width: 30px; height: 30px; border-radius: 50%; font-size: 16px; cursor: pointer; }
+        .help-box { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 10px 12px; font-size: 12px; color: #475569; line-height: 1.5; margin-top: 10px; }
+        .code-pill { background: #e2e8f0; padding: 2px 6px; border-radius: 4px; font-family: monospace; font-size: 11px; word-break: break-all; }
+
+        #toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); background: #111827; color: #fff; padding: 10px 18px; border-radius: 999px; font-size: 13px; font-weight: 600; z-index: 100; display: none; box-shadow: 0 10px 25px rgba(0,0,0,0.25); max-width: 90vw; text-align: center; }
+    </style>
+</head>
+<body>
+    <div class="heart-bg" id="heart-bg"></div>
+
+    <div class="container">
+        <!-- Top Navigation -->
+        <div class="topbar">
+            <div class="brand">
+                <span style="font-size: 24px;">💝</span>
+                <div>
+                    <h1>Hộp Tình Yêu</h1>
+                    <div style="font-size: 11px; color: var(--muted);">Cloud 24/24 • Chuẩn màn hình 240×320 ESP32</div>
+                </div>
+                <span class="box-badge" onclick="openSettings()" title="Đổi mã Hộp">Hộp: <span id="lbl-boxid">LOVE01</span></span>
+            </div>
+            <div class="top-actions">
+                <button id="btn-auth-status" class="btn-pill disconnected" onclick="openSettings()">🔑 Chưa kết nối quyền gửi</button>
+                <button class="btn-pill" onclick="openSettings()">⚙️ Cài đặt & Chia sẻ</button>
+            </div>
+        </div>
+
+        <!-- Love Counter -->
+        <div class="counter-card">
+            <div class="couple-title" id="lbl-couple">Anh ❤️ Em</div>
+            <div class="counter-grid">
+                <div class="c-box"><div class="c-val" id="c-days">0</div><div class="c-lbl">Ngày</div></div>
+                <div class="c-box"><div class="c-val" id="c-hours">0</div><div class="c-lbl">Giờ</div></div>
+                <div class="c-box"><div class="c-val" id="c-mins">0</div><div class="c-lbl">Phút</div></div>
+                <div class="c-box"><div class="c-val" id="c-secs">0</div><div class="c-lbl">Giây</div></div>
+            </div>
+            <div class="counter-sub">Bắt đầu từ: <strong id="lbl-startdate">14/02/2024</strong></div>
+        </div>
+
+        <div class="grid">
+            <!-- Upload & Crop Card -->
+            <div class="card">
+                <div class="card-title">
+                    <span>💌 Gửi Ảnh Mới Lên Hộp</span>
+                    <span style="font-size: 11px; color: var(--muted); font-weight: 500;">Tự động chuẩn 240×320</span>
+                </div>
+
+                <div class="dropzone" onclick="document.getElementById('file-input').click()">
+                    <input type="file" id="file-input" accept="image/*" onchange="onPickImage(event)">
+                    <div style="font-size: 30px; margin-bottom: 4px;">📸</div>
+                    <div style="font-weight: 700; font-size: 14px; color: var(--primary);">Chọn ảnh từ điện thoại / máy tính</div>
+                    <div style="font-size: 12px; color: var(--muted); margin-top: 3px;">Kéo chỉnh khung & tự nén siêu nhẹ ~15KB cho ESP32</div>
+                </div>
+
+                <div class="editor-wrap" id="editor-wrap">
+                    <div class="canvas-frame" id="canvas-frame" title="Kéo để căn chỉnh vị trí ảnh">
+                        <canvas id="crop-canvas" width="240" height="320"></canvas>
+                    </div>
+                    <div class="editor-tools">
+                        <button class="btn-sm" type="button" onclick="rotateImage()">↻ Xoay 90°</button>
+                        <label style="font-size: 11px; color: var(--muted);">Thu phóng:
+                            <input type="range" id="zoom-range" min="0.5" max="3" step="0.05" value="1" oninput="renderCanvas()">
+                        </label>
+                        <button class="btn-sm" type="button" onclick="resetTransform()">Căn giữa</button>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Lời nhắn yêu thương:</label>
+                    <textarea id="inp-caption" placeholder="Ví dụ: Chúc em một ngày thật vui vẻ nhé ❤️" oninput="renderCanvas()"></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label>Người gửi:</label>
+                    <input type="text" id="inp-sender" value="Anh yêu" oninput="renderCanvas()">
+                </div>
+
+                <label class="check-row">
+                    <input type="checkbox" id="chk-burn-caption" checked onchange="renderCanvas()">
+                    <span>In lời nhắn Tiếng Việt trực tiếp lên đáy ảnh (giúp ESP32 hiện đủ dấu đẹp nhất)</span>
+                </label>
+
+                <button class="btn-love" id="btn-send" onclick="uploadToGitHub()">💖 Gửi Vào Hộp Tình Yêu</button>
+            </div>
+
+            <!-- Live Box Preview -->
+            <div class="card" style="text-align: center;">
+                <div class="card-title" style="justify-content: center;">📺 Màn Hình ESP32 Thực Tế</div>
+                <div class="box-mockup">
+                    <div class="box-led" title="Cloud Ready"></div>
+                    <div class="box-screen" id="box-screen">
+                        <div class="box-empty">Đang tải ảnh từ GitHub...</div>
+                    </div>
+                </div>
+                <div class="box-meta" id="box-meta">Chưa có ảnh nào</div>
+
+                <div class="box-controls">
+                    <button class="btn-sm" onclick="stepPhoto(-1)">◀ Ảnh Trước</button>
+                    <button class="btn-sm" onclick="stepPhoto(1)">Ảnh Kế ▶</button>
+                    <button class="btn-sm" onclick="loadBoxData(true)">🔄 Tải lại</button>
+                </div>
+
+                <div class="mode-box">
+                    <div style="font-weight: 700; color: var(--primary-dark); margin-bottom: 6px;">Chế độ phát trên ESP32:</div>
+                    <select id="sel-mode" onchange="saveBoxSettings()">
+                        <option value="current">📌 Giữ cố định ảnh đang chọn</option>
+                        <option value="slideshow">🎞️ Trình chiếu luân phiên cả Album</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <!-- Album -->
+        <div class="card album-card">
+            <div class="card-title">
+                <span>📖 Album Kỷ Niệm (<span id="lbl-count">0</span> ảnh)</span>
+                <span style="font-size: 11px; color: var(--muted); font-weight: 400;">Chạm vào ảnh để chiếu ngay lên Hộp</span>
+            </div>
+            <div class="album-grid" id="album-grid"></div>
+        </div>
+    </div>
+
+    <!-- Settings / Auth Modal -->
+    <div class="modal-backdrop" id="modal-settings">
+        <div class="modal">
+            <div class="modal-head">
+                <h2>⚙️ Cài đặt & Kết nối Hộp</h2>
+                <button class="close-btn" onclick="closeSettings()">✕</button>
+            </div>
+
+            <div class="form-group">
+                <label>GitHub Owner (Tên tài khoản GitHub):</label>
+                <input type="text" id="cfg-owner" placeholder="VD: nguyenvana">
+            </div>
+
+            <div class="form-group">
+                <label>Tên Repo GitHub:</label>
+                <input type="text" id="cfg-repo" placeholder="VD: hop-tinh-yeu">
+            </div>
+
+            <div class="form-group">
+                <label>Mã Hộp (Box ID — mỗi khách 1 mã riêng):</label>
+                <input type="text" id="cfg-boxid" placeholder="VD: LOVE01">
+            </div>
+
+            <div class="form-group">
+                <label>Chìa khóa gửi ảnh (GitHub Token):</label>
+                <input type="password" id="cfg-token" placeholder="github_pat_... (lưu cục bộ trên máy này)">
+            </div>
+
+            <div class="form-group">
+                <label>Tên cặp đôi:</label>
+                <input type="text" id="cfg-couple" placeholder="Anh ❤️ Em">
+            </div>
+
+            <div class="form-group">
+                <label>Ngày bắt đầu yêu nhau:</label>
+                <input type="date" id="cfg-startdate">
+            </div>
+
+            <button class="btn-love" onclick="saveSettings()">💾 Lưu Cài Đặt & Đồng Bộ</button>
+
+            <div class="help-box">
+                <strong>🎁 Tạo Link Tặng Người Yêu / Khách Hàng (Bấm 1 lần là gửi được ảnh ngay):</strong>
+                <div style="margin-top: 6px; display: flex; gap: 6px;">
+                    <input type="text" id="share-link-out" readonly style="font-size: 11px; padding: 6px 8px;">
+                    <button class="btn-sm" type="button" onclick="copyShareLink()" style="white-space: nowrap;">📋 Copy Link</button>
+                </div>
+                <div style="margin-top: 6px; color: #64748b;">
+                    Link này tự động nạp sẵn mã Hộp & Chìa khóa vào trình duyệt người nhận (sau dấu <span class="code-pill">#key=</span> chỉ chạy cục bộ trên máy họ, an toàn tuyệt đối).
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="toast"></div>
+
+    <script>
+        // ===== UTF-8 SAFE BASE64 HELPERS =====
+        function strToBase64(str) {
+            const bytes = new TextEncoder().encode(str);
+            let bin = "";
+            for (let i = 0; i < bytes.length; i++) bin += String.fromCharCode(bytes[i]);
+            return btoa(bin);
+        }
+        function base64ToStr(b64) {
+            const bin = atob(b64.replace(/\s/g, ""));
+            const bytes = new Uint8Array(bin.length);
+            for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+            return new TextDecoder("utf-8").decode(bytes);
+        }
+
+        // ===== STATE & CONFIG =====
+        const TARGET_W = 240;
+        const TARGET_H = 320;
+        const params = new URLSearchParams(window.location.search);
+
+        function detectGitHubRepo() {
+            const host = window.location.hostname;
+            const segs = window.location.pathname.split("/").filter(Boolean);
+            let owner = "";
+            let repo = "";
+            if (host.endsWith(".github.io")) {
+                owner = host.split(".")[0];
+                repo = segs.length > 0 ? segs[0] : (owner + ".github.io");
+            }
+            return { owner, repo };
+        }
+
+        const detected = detectGitHubRepo();
+        let cfg = {
+            owner: params.get("owner") || localStorage.getItem("lb_owner") || detected.owner || "",
+            repo: params.get("repo") || localStorage.getItem("lb_repo") || detected.repo || "hop-tinh-yeu",
+            boxId: (params.get("box") || localStorage.getItem("lb_boxid") || "LOVE01").toUpperCase(),
+            branch: params.get("branch") || localStorage.getItem("lb_branch") || "main",
+            token: localStorage.getItem("lb_token") || ""
+        };
+
+        // Check #key= in hash for zero-friction pairing
+        if (window.location.hash && window.location.hash.includes("key=")) {
+            const hParams = new URLSearchParams(window.location.hash.slice(1));
+            const key = hParams.get("key");
+            if (key) {
+                cfg.token = key;
+                localStorage.setItem("lb_token", key);
+                history.replaceState(null, "", window.location.pathname + window.location.search);
+                setTimeout(() => showToast("✨ Đã tự động kết nối chìa khóa Hộp Tình Yêu!"), 400);
+            }
+        }
+        localStorage.setItem("lb_owner", cfg.owner);
+        localStorage.setItem("lb_repo", cfg.repo);
+        localStorage.setItem("lb_boxid", cfg.boxId);
+
+        let boxInfo = {
+            boxId: cfg.boxId,
+            coupleName: "Anh ❤️ Em",
+            startDate: "2024-02-14",
+            mode: "current",
+            slideInterval: 30,
+            currentId: "",
+            updatedAt: 0,
+            photos: []
+        };
+        let infoSha = null;
+
+        // ===== FLOATING HEARTS =====
+        (function spawnHearts() {
+            const bg = document.getElementById("heart-bg");
+            const icons = ["❤️", "💖", "💕", "🌸", "✨"];
+            for (let i = 0; i < 14; i++) {
+                const el = document.createElement("div");
+                el.className = "heart";
+                el.textContent = icons[i % icons.length];
+                el.style.left = Math.random() * 100 + "vw";
+                el.style.animationDelay = (Math.random() * 9) + "s";
+                el.style.animationDuration = (7 + Math.random() * 5) + "s";
+                bg.appendChild(el);
+            }
+        })();
+
+        // ===== LOVE COUNTER =====
+        function updateCounter() {
+            const start = new Date((boxInfo.startDate || "2024-02-14") + "T00:00:00");
+            const now = new Date();
+            const diff = Math.max(0, now - start);
+            document.getElementById("c-days").textContent = Math.floor(diff / 86400000);
+            document.getElementById("c-hours").textContent = Math.floor((diff / 3600000) % 24);
+            document.getElementById("c-mins").textContent = Math.floor((diff / 60000) % 60);
+            document.getElementById("c-secs").textContent = Math.floor((diff / 1000) % 60);
+            document.getElementById("lbl-couple").textContent = boxInfo.coupleName || "Anh ❤️ Em";
+            document.getElementById("lbl-startdate").textContent = start.toLocaleDateString("vi-VN");
+        }
+        setInterval(updateCounter, 1000);
+
+        // ===== UI HELPERS =====
+        function showToast(msg) {
+            const t = document.getElementById("toast");
+            t.textContent = msg;
+            t.style.display = "block";
+            clearTimeout(t._timer);
+            t._timer = setTimeout(() => { t.style.display = "none"; }, 3800);
+        }
+
+        function refreshTopBar() {
+            document.getElementById("lbl-boxid").textContent = cfg.boxId;
+            const btn = document.getElementById("btn-auth-status");
+            if (cfg.token && cfg.owner) {
+                btn.className = "btn-pill connected";
+                btn.textContent = "🟢 Sẵn sàng gửi ảnh";
+            } else {
+                btn.className = "btn-pill disconnected";
+                btn.textContent = "🔑 Nhập chìa khóa để gửi";
+            }
+        }
+
+        // ===== GITHUB API CALLS =====
+        function apiHeaders(hasToken = true) {
+            const h = { "Accept": "application/vnd.github+json" };
+            if (hasToken && cfg.token) h["Authorization"] = "Bearer " + cfg.token;
+            return h;
+        }
+
+        function infoPath() {
+            return `boxes/${cfg.boxId}/info.json`;
+        }
+
+        function photoRawUrl(filePath) {
+            return `https://raw.githubusercontent.com/${cfg.owner}/${cfg.repo}/${cfg.branch}/boxes/${cfg.boxId}/${filePath}`;
+        }
+
+        async function loadBoxData(notify = false) {
+            refreshTopBar();
+            if (!cfg.owner || !cfg.repo) {
+                document.getElementById("box-screen").innerHTML = '<div class="box-empty">Chưa cấu hình GitHub Owner/Repo.<br><br>Bấm "Cài đặt" ở góc trên để kết nối.</div>';
+                return;
+            }
+            try {
+                const url = `https://api.github.com/repos/${cfg.owner}/${cfg.repo}/contents/${infoPath()}?ref=${cfg.branch}&_=${Date.now()}`;
+                const res = await fetch(url, { headers: apiHeaders(true), cache: "no-store" });
+                if (res.status === 404) {
+                    infoSha = null;
+                    boxInfo = { boxId: cfg.boxId, coupleName: "Anh ❤️ Em", startDate: "2024-02-14", mode: "current", slideInterval: 30, currentId: "", updatedAt: 0, photos: [] };
+                    renderBoxUI();
+                    if (notify) showToast("Hộp mới " + cfg.boxId + " — hãy gửi ảnh đầu tiên để khởi tạo!");
+                    return;
+                }
+                if (!res.ok) throw new Error("HTTP " + res.status);
+                const data = await res.json();
+                infoSha = data.sha;
+                boxInfo = JSON.parse(base64ToStr(data.content));
+                renderBoxUI();
+                if (notify) showToast("Đã đồng bộ dữ liệu mới nhất!");
+            } catch (err) {
+                console.error(err);
+                document.getElementById("box-screen").innerHTML = `<div class="box-empty">Không tải được dữ liệu (${err.message}).<br>Kiểm tra tên Repo hoặc Token trong Cài đặt.</div>`;
+            }
+        }
+
+        function attachRetryImg(imgEl, url) {
+            let tries = 0;
+            imgEl.src = url;
+            imgEl.onerror = () => {
+                if (tries < 3) {
+                    tries++;
+                    setTimeout(() => { imgEl.src = url + "?r=" + tries; }, 1500);
+                }
+            };
+        }
+
+        function renderBoxUI() {
+            updateCounter();
+            document.getElementById("sel-mode").value = boxInfo.mode || "current";
+            const photos = boxInfo.photos || [];
+            document.getElementById("lbl-count").textContent = photos.length;
+
+            // Current screen preview
+            const screen = document.getElementById("box-screen");
+            const meta = document.getElementById("box-meta");
+            const current = photos.find(p => p.id === boxInfo.currentId) || photos[0];
+            if (current) {
+                const imgUrl = photoRawUrl(current.file);
+                screen.innerHTML = "";
+                const curImg = document.createElement("img");
+                curImg.alt = "ESP32 Screen";
+                attachRetryImg(curImg, imgUrl);
+                screen.appendChild(curImg);
+                meta.textContent = `${current.sender || "Love"} • ${current.date || ""} ${current.caption ? "— " + current.caption : ""}`;
+            } else {
+                screen.innerHTML = '<div class="box-empty">Hộp đang chờ tấm ảnh đầu tiên 💕</div>';
+                meta.textContent = "Chưa có ảnh nào";
+            }
+
+            // Album grid
+            const grid = document.getElementById("album-grid");
+            if (photos.length === 0) {
+                grid.innerHTML = '<div style="grid-column: 1/-1; text-align:center; color:#9ca3af; padding:24px;">Chưa có ảnh kỷ niệm nào trong hộp này.</div>';
+                return;
+            }
+            grid.innerHTML = "";
+            photos.forEach(p => {
+                const div = document.createElement("div");
+                div.className = "album-item" + (current && p.id === current.id ? " active" : "");
+                div.onclick = () => selectPhoto(p.id);
+
+                const img = document.createElement("img");
+                img.loading = "lazy";
+                attachRetryImg(img, photoRawUrl(p.file));
+                div.appendChild(img);
+
+                const cap = document.createElement("div");
+                cap.className = "album-cap";
+                cap.textContent = p.caption || p.date || p.id;
+                div.appendChild(cap);
+
+                if (cfg.token) {
+                    const del = document.createElement("button");
+                    del.className = "album-del";
+                    del.textContent = "✕";
+                    del.title = "Xóa ảnh";
+                    del.onclick = (e) => { e.stopPropagation(); deletePhoto(p.id); };
+                    div.appendChild(del);
+                }
+                grid.appendChild(div);
+            });
+        }
+
+        // ===== IMAGE CROPPER & CAPTION BURNER (240x320 BASELINE JPEG) =====
+        let loadedImg = null;
+        let imgAngle = 0;
+        let offsetX = 0;
+        let offsetY = 0;
+        let dragging = false;
+        let dragLastX = 0;
+        let dragLastY = 0;
+
+        const canvas = document.getElementById("crop-canvas");
+        const ctx = canvas.getContext("2d");
+
+        function onPickImage(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (ev) => {
+                const img = new Image();
+                img.onload = () => {
+                    loadedImg = img;
+                    imgAngle = 0;
+                    resetTransform();
+                    document.getElementById("editor-wrap").style.display = "block";
+                };
+                img.src = ev.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function resetTransform() {
+            offsetX = 0;
+            offsetY = 0;
+            document.getElementById("zoom-range").value = "1";
+            renderCanvas();
+        }
+
+        function rotateImage() {
+            imgAngle = (imgAngle + 90) % 360;
+            renderCanvas();
+        }
+
+        // Mouse & Touch panning inside 240x320 frame
+        const frame = document.getElementById("canvas-frame");
+        frame.addEventListener("pointerdown", (e) => {
+            dragging = true;
+            dragLastX = e.clientX;
+            dragLastY = e.clientY;
+            frame.setPointerCapture(e.pointerId);
+        });
+        frame.addEventListener("pointermove", (e) => {
+            if (!dragging) return;
+            offsetX += e.clientX - dragLastX;
+            offsetY += e.clientY - dragLastY;
+            dragLastX = e.clientX;
+            dragLastY = e.clientY;
+            renderCanvas();
+        });
+        frame.addEventListener("pointerup", () => { dragging = false; });
+
+        function wrapTextLines(context, text, maxWidth) {
+            const words = text.split(/\s+/);
+            const lines = [];
+            let line = "";
+            for (const w of words) {
+                const test = line ? (line + " " + w) : w;
+                if (context.measureText(test).width > maxWidth && line) {
+                    lines.push(line);
+                    line = w;
+                } else {
+                    line = test;
+                }
+            }
+            if (line) lines.push(line);
+            return lines.slice(0, 2);
+        }
+
+        function renderCanvas() {
+            if (!loadedImg) return;
+            ctx.fillStyle = "#111827";
+            ctx.fillRect(0, 0, TARGET_W, TARGET_H);
+
+            const zoom = parseFloat(document.getElementById("zoom-range").value || "1");
+            const rotated = (imgAngle === 90 || imgAngle === 270);
+            const iw = rotated ? loadedImg.height : loadedImg.width;
+            const ih = rotated ? loadedImg.width : loadedImg.height;
+            const baseScale = Math.max(TARGET_W / iw, TARGET_H / ih);
+            const scale = baseScale * zoom;
+
+            ctx.save();
+            ctx.translate(TARGET_W / 2 + offsetX, TARGET_H / 2 + offsetY);
+            ctx.rotate((imgAngle * Math.PI) / 180);
+            ctx.scale(scale, scale);
+            ctx.drawImage(loadedImg, -loadedImg.width / 2, -loadedImg.height / 2);
+            ctx.restore();
+
+            // Optional Vietnamese caption bar directly baked into JPEG
+            const burn = document.getElementById("chk-burn-caption").checked;
+            const caption = document.getElementById("inp-caption").value.trim();
+            const sender = document.getElementById("inp-sender").value.trim();
+            if (burn && (caption || sender)) {
+                const grad = ctx.createLinearGradient(0, TARGET_H - 85, 0, TARGET_H);
+                grad.addColorStop(0, "rgba(0,0,0,0)");
+                grad.addColorStop(0.35, "rgba(0,0,0,0.68)");
+                grad.addColorStop(1, "rgba(0,0,0,0.88)");
+                ctx.fillStyle = grad;
+                ctx.fillRect(0, TARGET_H - 85, TARGET_W, 85);
+
+                ctx.textAlign = "left";
+                ctx.fillStyle = "#ffffff";
+                ctx.font = "bold 13px -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif";
+                const lines = caption ? wrapTextLines(ctx, caption, TARGET_W - 20) : [];
+                let y = TARGET_H - 28 - (lines.length - 1) * 16;
+                if (lines.length === 0) y = TARGET_H - 14;
+                lines.forEach((l, idx) => {
+                    ctx.fillText(l, 10, y + idx * 16);
+                });
+
+                ctx.fillStyle = "#fda4af";
+                ctx.font = "600 10px -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif";
+                const nowStr = new Date().toLocaleDateString("vi-VN");
+                ctx.fillText(`${sender ? sender + " ❤️ " : ""}${nowStr}`, 10, TARGET_H - 9);
+            }
+        }
+
+        // ===== UPLOAD & SAVE TO GITHUB =====
+        async function putGitHubFile(path, base64Content, message, sha = null) {
+            const url = `https://api.github.com/repos/${cfg.owner}/${cfg.repo}/contents/${path}`;
+            const body = { message, content: base64Content, branch: cfg.branch };
+            if (sha) body.sha = sha;
+            const res = await fetch(url, {
+                method: "PUT",
+                headers: { ...apiHeaders(true), "Content-Type": "application/json" },
+                body: JSON.stringify(body)
+            });
+            if (!res.ok) {
+                const err = await res.json().catch(() => ({}));
+                throw new Error(err.message || ("HTTP " + res.status));
+            }
+            return await res.json();
+        }
+
+        async function commitInfoWithRetry(mutatorFn, commitMsg) {
+            for (let attempt = 0; attempt < 2; attempt++) {
+                // Always pull latest info.json sha first to avoid 409 conflict
+                const url = `https://api.github.com/repos/${cfg.owner}/${cfg.repo}/contents/${infoPath()}?ref=${cfg.branch}&_=${Date.now()}`;
+                const getRes = await fetch(url, { headers: apiHeaders(true), cache: "no-store" });
+                let curData = { ...boxInfo };
+                let curSha = null;
+                if (getRes.ok) {
+                    const j = await getRes.json();
+                    curSha = j.sha;
+                    curData = JSON.parse(base64ToStr(j.content));
+                }
+                mutatorFn(curData);
+                curData.boxId = cfg.boxId;
+                curData.updatedAt = Date.now();
+                try {
+                    const putRes = await putGitHubFile(infoPath(), strToBase64(JSON.stringify(curData, null, 2)), commitMsg, curSha);
+                    infoSha = putRes.content.sha;
+                    boxInfo = curData;
+                    return;
+                } catch (e) {
+                    if (attempt === 0 && String(e.message).includes("does not match")) continue;
+                    throw e;
+                }
+            }
+        }
+
+        async function uploadToGitHub() {
+            if (!cfg.token || !cfg.owner || !cfg.repo) {
+                showToast("Hãy nhập Chìa khóa gửi ảnh (GitHub Token) trong phần Cài đặt!");
+                openSettings();
+                return;
+            }
+            if (!loadedImg) {
+                showToast("Vui lòng chọn 1 tấm ảnh trước nhé 📸");
+                return;
+            }
+
+            const btn = document.getElementById("btn-send");
+            btn.disabled = true;
+            btn.textContent = "⏳ Đang đẩy ảnh lên Hộp Tình Yêu...";
+
+            try {
+                renderCanvas();
+                const dataUrl = canvas.toDataURL("image/jpeg", 0.88);
+                const jpgB64 = dataUrl.split(",")[1];
+                const id = String(Date.now());
+                const fileRel = `photos/${id}.jpg`;
+                const caption = document.getElementById("inp-caption").value.trim();
+                const sender = document.getElementById("inp-sender").value.trim() || "Anh yêu";
+                const dateStr = new Date().toLocaleString("vi-VN", { hour12: false }).slice(0, 16);
+
+                // 1. Upload JPEG file
+                await putGitHubFile(`boxes/${cfg.boxId}/${fileRel}`, jpgB64, `Add photo ${id} to ${cfg.boxId}`);
+
+                // 2. Update info.json
+                await commitInfoWithRetry((data) => {
+                    data.photos = data.photos || [];
+                    data.photos.unshift({ id, caption, sender, date: dateStr, file: fileRel });
+                    data.currentId = id;
+                }, `Update current photo ${id} for ${cfg.boxId}`);
+
+                renderBoxUI();
+                showToast("💖 Đã gửi ảnh thành công! ESP32 sẽ tự hiện ảnh mới!");
+                loadedImg = null;
+                document.getElementById("file-input").value = "";
+                document.getElementById("editor-wrap").style.display = "none";
+                document.getElementById("inp-caption").value = "";
+            } catch (err) {
+                showToast("❌ Lỗi gửi ảnh: " + err.message);
+            } finally {
+                btn.disabled = false;
+                btn.textContent = "💖 Gửi Vào Hộp Tình Yêu";
+            }
+        }
+
+        async function selectPhoto(id) {
+            if (!cfg.token) {
+                showToast("Bạn đang ở chế độ Chỉ Xem. Cần Chìa khóa để đổi ảnh Hộp!");
+                return;
+            }
+            try {
+                showToast("Đang đổi ảnh trên ESP32...");
+                await commitInfoWithRetry((data) => { data.currentId = id; }, `Select photo ${id}`);
+                renderBoxUI();
+                showToast("📺 Đã chọn ảnh chiếu lên Hộp!");
+            } catch (err) {
+                showToast("Lỗi đổi ảnh: " + err.message);
+            }
+        }
+
+        async function stepPhoto(dir) {
+            const photos = boxInfo.photos || [];
+            if (photos.length === 0) return;
+            let idx = photos.findIndex(p => p.id === boxInfo.currentId);
+            if (idx < 0) idx = 0;
+            const nextIdx = (idx + dir + photos.length) % photos.length;
+            await selectPhoto(photos[nextIdx].id);
+        }
+
+        async function deletePhoto(id) {
+            if (!confirm("Xóa ảnh kỷ niệm này khỏi Hộp?")) return;
+            try {
+                await commitInfoWithRetry((data) => {
+                    data.photos = (data.photos || []).filter(p => p.id !== id);
+                    if (data.currentId === id) {
+                        data.currentId = data.photos[0] ? data.photos[0].id : "";
+                    }
+                }, `Remove photo ${id}`);
+                renderBoxUI();
+                showToast("Đã xóa ảnh khỏi Album!");
+            } catch (err) {
+                showToast("Lỗi xóa: " + err.message);
+            }
+        }
+
+        async function saveBoxSettings() {
+            if (!cfg.token) return;
+            const mode = document.getElementById("sel-mode").value;
+            try {
+                await commitInfoWithRetry((data) => { data.mode = mode; }, `Set mode ${mode}`);
+                showToast("Đã cập nhật chế độ phát ESP32!");
+            } catch (err) {
+                showToast("Lỗi lưu chế độ: " + err.message);
+            }
+        }
+
+        // ===== SETTINGS MODAL & SHARE LINK =====
+        function openSettings() {
+            document.getElementById("cfg-owner").value = cfg.owner;
+            document.getElementById("cfg-repo").value = cfg.repo;
+            document.getElementById("cfg-boxid").value = cfg.boxId;
+            document.getElementById("cfg-token").value = cfg.token;
+            document.getElementById("cfg-couple").value = boxInfo.coupleName || "Anh ❤️ Em";
+            document.getElementById("cfg-startdate").value = boxInfo.startDate || "2024-02-14";
+            updateShareLinkPreview();
+            document.getElementById("modal-settings").classList.add("open");
+        }
+
+        function closeSettings() {
+            document.getElementById("modal-settings").classList.remove("open");
+        }
+
+        function updateShareLinkPreview() {
+            const owner = document.getElementById("cfg-owner").value.trim();
+            const repo = document.getElementById("cfg-repo").value.trim();
+            const boxId = (document.getElementById("cfg-boxid").value.trim() || "LOVE01").toUpperCase();
+            const token = document.getElementById("cfg-token").value.trim();
+            const base = window.location.origin + window.location.pathname;
+            let url = `${base}?box=${encodeURIComponent(boxId)}`;
+            if (!window.location.hostname.endsWith(".github.io") && owner && repo) {
+                url += `&owner=${encodeURIComponent(owner)}&repo=${encodeURIComponent(repo)}`;
+            }
+            if (token) url += `#key=${encodeURIComponent(token)}`;
+            document.getElementById("share-link-out").value = url;
+        }
+
+        ["cfg-owner", "cfg-repo", "cfg-boxid", "cfg-token"].forEach(id => {
+            document.getElementById(id).addEventListener("input", updateShareLinkPreview);
+        });
+
+        async function saveSettings() {
+            cfg.owner = document.getElementById("cfg-owner").value.trim();
+            cfg.repo = document.getElementById("cfg-repo").value.trim();
+            cfg.boxId = (document.getElementById("cfg-boxid").value.trim() || "LOVE01").toUpperCase();
+            cfg.token = document.getElementById("cfg-token").value.trim();
+
+            localStorage.setItem("lb_owner", cfg.owner);
+            localStorage.setItem("lb_repo", cfg.repo);
+            localStorage.setItem("lb_boxid", cfg.boxId);
+            localStorage.setItem("lb_token", cfg.token);
+
+            const couple = document.getElementById("cfg-couple").value.trim() || "Anh ❤️ Em";
+            const startDate = document.getElementById("cfg-startdate").value || "2024-02-14";
+
+            closeSettings();
+            refreshTopBar();
+
+            if (cfg.token && cfg.owner && cfg.repo) {
+                try {
+                    await commitInfoWithRetry((data) => {
+                        data.coupleName = couple;
+                        data.startDate = startDate;
+                    }, `Update box settings for ${cfg.boxId}`);
+                    showToast("✅ Đã lưu cài đặt & đồng bộ lên GitHub!");
+                } catch (e) {
+                    showToast("Đã lưu cục bộ, chưa đồng bộ được cloud: " + e.message);
+                }
+            }
+            await loadBoxData(false);
+        }
+
+        function copyShareLink() {
+            updateShareLinkPreview();
+            const inp = document.getElementById("share-link-out");
+            inp.select();
+            navigator.clipboard.writeText(inp.value).then(() => showToast("📋 Đã copy link tặng người yêu!"));
+        }
+
+        // Start
+        loadBoxData(false);
+        setInterval(() => loadBoxData(false), 20000);
+    </script>
+</body>
+</html>
