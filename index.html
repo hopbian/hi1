@@ -126,6 +126,28 @@
         .tag.ok { background: #ecfdf5; color: #047857; }
         .tag.locked { background: #fef2f2; color: #b91c1c; }
 
+        /* Section Tabs & Utilities */
+        .nav-tabs { display: flex; gap: 10px; margin-bottom: 16px; flex-wrap: wrap; }
+        .nav-tab { padding: 10px 18px; border-radius: 14px; border: 1px solid #fbcfe8; background: rgba(255,255,255,0.8); color: #6b7280; font-size: 14px; font-weight: 700; cursor: pointer; transition: all 0.15s; display: inline-flex; align-items: center; gap: 6px; }
+        .nav-tab.active { background: linear-gradient(135deg, #ff3b72, #e11d58); color: #fff; border-color: transparent; box-shadow: 0 6px 15px rgba(255, 59, 114, 0.25); }
+        .util-grid { display: grid; grid-template-columns: 1fr 330px; gap: 18px; align-items: start; }
+        @media (max-width: 800px) { .util-grid { grid-template-columns: 1fr; } }
+        .util-row { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 10px 12px; border: 1px solid #f3d1e2; border-radius: 12px; background: #fff; margin-top: 8px; }
+        .day-pills { display: flex; gap: 5px; flex-wrap: wrap; margin-top: 6px; }
+        .day-pill { width: 32px; height: 28px; border-radius: 8px; border: 1px solid #e5e7eb; background: #f9fafb; font-size: 11px; font-weight: 700; cursor: pointer; color: #4b5563; }
+        .day-pill.on { background: var(--primary); color: #fff; border-color: var(--primary); }
+        .inline-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .esp-sim-clock { width: 100%; height: 100%; display: flex; flex-direction: column; justify-content: space-between; padding: 18px 14px; text-align: center; color: #fff; }
+        .esp-sim-clock.theme-love { background: linear-gradient(160deg, #2d1022 0%, #4c1130 55%, #1f1024 100%); }
+        .esp-sim-clock.theme-led { background: #05080f; color: #38bdf8; }
+        .esp-sim-clock.theme-classic { background: #1e293b; color: #f8fafc; }
+        .sim-time { font-size: 46px; font-weight: 800; letter-spacing: 1px; line-height: 1; }
+        .sim-sec { font-size: 16px; opacity: 0.75; margin-left: 3px; }
+        .sim-date { font-size: 13px; margin-top: 8px; opacity: 0.9; }
+        .sim-cal-list { width: 100%; height: 100%; background: #0f172a; color: #f8fafc; padding: 14px 12px; text-align: left; overflow-y: auto; }
+        .sim-cal-item { background: rgba(255,255,255,0.08); border-left: 3px solid #ff3b72; padding: 7px 8px; border-radius: 6px; margin-bottom: 7px; font-size: 11px; }
+        .idea-chip { background: #fff9fb; border: 1px solid #fbcfe8; border-radius: 12px; padding: 10px 12px; font-size: 12px; line-height: 1.45; }
+
         /* Modal */
         .modal-backdrop { position: fixed; inset: 0; background: rgba(17, 24, 39, 0.6); backdrop-filter: blur(3px); z-index: 50; display: none; align-items: center; justify-content: center; padding: 16px; }
         .modal-backdrop.open { display: flex; }
@@ -221,6 +243,14 @@
                 <div class="counter-sub">Bắt đầu từ: <strong id="lbl-startdate">14/02/2024</strong></div>
             </div>
 
+            <!-- Section Tabs -->
+            <div class="nav-tabs">
+                <button class="nav-tab active" id="nav-btn-photos" onclick="switchTab('photos')">📸 Ảnh &amp; Màn Hình Hộp</button>
+                <button class="nav-tab" id="nav-btn-utilities" onclick="switchTab('utilities')">🧩 Tiện Ích</button>
+            </div>
+
+            <!-- TAB 1: PHOTOS & ALBUM -->
+            <div id="tab-photos">
             <div class="grid">
                 <!-- Upload & Crop Card -->
                 <div class="card">
@@ -302,6 +332,134 @@
                 </div>
                 <div class="album-grid" id="album-grid"></div>
             </div>
+            </div><!-- END TAB 1: PHOTOS -->
+
+            <!-- TAB 2: TIỆN ÍCH (UTILITIES) -->
+            <div id="tab-utilities" style="display: none;">
+                <div class="util-grid">
+                    <div style="display: flex; flex-direction: column; gap: 18px;">
+                        <!-- Card 1: Nút nhấn & Đồng hồ / Ngày tháng -->
+                        <div class="card">
+                            <div class="card-title">
+                                <span>⏰ Đồng Hồ, Ngày Tháng &amp; Nút Nhấn Vật Lý</span>
+                                <span style="font-size: 11px; color: var(--muted);">Đồng bộ NTP UTC+7</span>
+                            </div>
+                            <div class="form-group">
+                                <label>Chức năng Nút nhấn vật lý riêng trên Hộp ESP32:</label>
+                                <select id="ut-button-mode" onchange="saveUtilities()">
+                                    <option value="cycle_pages">🔘 Bấm ngắn chuyển trang (Ảnh → Đồng hồ/Ngày → Lịch) • Bấm giữ tắt chuông</option>
+                                    <option value="toggle_clock">⏱️ Bấm ngắn bật/tắt nhanh Đồng hồ &amp; Ngày tháng</option>
+                                    <option value="alarm_ack">🔕 Bấm nút để tắt báo thức / xác nhận đã đọc nhắc nhở</option>
+                                </select>
+                            </div>
+                            <div class="inline-2">
+                                <div class="form-group">
+                                    <label>Trang mặc định khi bật hộp:</label>
+                                    <select id="ut-screen-mode" onchange="saveUtilities()">
+                                        <option value="auto_button">🎛️ Theo nút nhấn vật lý</option>
+                                        <option value="photo">📸 Ảnh kỷ niệm</option>
+                                        <option value="clock">⏰ Đồng hồ &amp; Ngày tháng</option>
+                                        <option value="calendar">📅 Lịch hẹn &amp; Sự kiện</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label>Giao diện Đồng hồ trên màn 240×320:</label>
+                                    <select id="ut-clock-theme" onchange="saveUtilities(); renderSimPreview();">
+                                        <option value="love">💖 Tình Yêu Hồng</option>
+                                        <option value="led">💠 LED Số Hiện Đại</option>
+                                        <option value="classic">🕰️ Cổ Điển Tối Giản</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div style="display:flex; gap:16px; flex-wrap:wrap; margin-top:8px;">
+                                <label class="check-row"><input type="checkbox" id="ut-24h" checked onchange="saveUtilities(); renderSimPreview();"> <span>Định dạng 24 giờ</span></label>
+                                <label class="check-row"><input type="checkbox" id="ut-sec" checked onchange="saveUtilities(); renderSimPreview();"> <span>Hiện giây</span></label>
+                                <label class="check-row"><input type="checkbox" id="ut-date" checked onchange="saveUtilities(); renderSimPreview();"> <span>Hiện Thứ &amp; Ngày/Tháng</span></label>
+                                <label class="check-row"><input type="checkbox" id="ut-nightdim" checked onchange="saveUtilities()"> <span>Giảm sáng đêm (23:00–06:30)</span></label>
+                            </div>
+                        </div>
+
+                        <!-- Card 2: Báo thức -->
+                        <div class="card">
+                            <div class="card-title">
+                                <span>🔔 Đồng Hồ Báo Thức &amp; Nhắc Nhở</span>
+                                <span style="font-size: 11px; color: var(--muted);">Tối đa 20 khung giờ</span>
+                            </div>
+                            <div class="inline-2">
+                                <div class="form-group">
+                                    <label>Giờ báo thức:</label>
+                                    <input type="time" id="al-time" value="07:00" style="padding:9px; border-radius:10px; border:1px solid #f3d1e2; width:100%;">
+                                </div>
+                                <div class="form-group">
+                                    <label>Lời nhắc hiện trên màn hình:</label>
+                                    <input type="text" id="al-label" placeholder="VD: Dậy đi làm nhé ❤️">
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label>Lặp lại các ngày trong tuần:</label>
+                                <div class="day-pills" id="al-days-picker">
+                                    <button type="button" class="day-pill on" data-day="1" onclick="this.classList.toggle('on')">T2</button>
+                                    <button type="button" class="day-pill on" data-day="2" onclick="this.classList.toggle('on')">T3</button>
+                                    <button type="button" class="day-pill on" data-day="3" onclick="this.classList.toggle('on')">T4</button>
+                                    <button type="button" class="day-pill on" data-day="4" onclick="this.classList.toggle('on')">T5</button>
+                                    <button type="button" class="day-pill on" data-day="5" onclick="this.classList.toggle('on')">T6</button>
+                                    <button type="button" class="day-pill" data-day="6" onclick="this.classList.toggle('on')">T7</button>
+                                    <button type="button" class="day-pill" data-day="0" onclick="this.classList.toggle('on')">CN</button>
+                                </div>
+                            </div>
+                            <button class="btn-love" style="margin-top:12px;" onclick="addAlarm()">➕ Thêm Báo Thức</button>
+                            <div id="alarm-list" style="margin-top:12px;"></div>
+                        </div>
+
+                        <!-- Card 3: Upload Lịch & Ngày kỷ niệm -->
+                        <div class="card">
+                            <div class="card-title">
+                                <span>📅 Ngày Tháng &amp; Upload Lịch Sự Kiện</span>
+                                <button class="btn-sm" type="button" onclick="downloadSampleCsv()">📥 Tải CSV mẫu</button>
+                            </div>
+                            <div class="dropzone" style="padding:14px;" onclick="document.getElementById('cal-file-input').click()">
+                                <input type="file" id="cal-file-input" accept=".ics,.csv,.txt" onchange="onUploadCalendarFile(event)">
+                                <div style="font-size: 24px;">📤</div>
+                                <div style="font-weight:700; font-size:13px; color:var(--primary);">Upload file Lịch (.ics từ Google/iPhone Calendar hoặc .csv)</div>
+                                <div style="font-size:11px; color:var(--muted); margin-top:2px;">Định dạng CSV: YYYY-MM-DD,HH:MM,Nội dung sự kiện</div>
+                            </div>
+                            <div class="inline-2" style="margin-top:8px;">
+                                <div class="form-group"><label>Ngày sự kiện:</label><input type="date" id="ev-date"></div>
+                                <div class="form-group"><label>Giờ (tùy chọn):</label><input type="time" id="ev-time" style="padding:9px; border-radius:10px; border:1px solid #f3d1e2; width:100%;"></div>
+                            </div>
+                            <div class="form-group"><label>Tên sự kiện / Lịch hẹn:</label><input type="text" id="ev-title" placeholder="VD: Kỷ niệm 3 năm yêu nhau 💕"></div>
+                            <button class="btn-love" style="margin-top:12px;" onclick="addCalendarEvent()">📌 Thêm Sự Kiện Vào Hộp</button>
+                            <div id="event-list" style="margin-top:12px;"></div>
+                        </div>
+
+                        <!-- Card 4: Gợi ý mở rộng -->
+                        <div class="card">
+                            <div class="card-title"><span>💡 Gợi Ý Tiện Ích Có Thể Tích Hợp Thêm</span></div>
+                            <div class="inline-2">
+                                <div class="idea-chip"><strong>🌤️ Thời tiết địa phương:</strong> Hiện nhiệt độ &amp; nhắc "Trời sắp mưa nhớ mang áo mưa ❤️".</div>
+                                <div class="idea-chip"><strong>💓 Thả tim hai chiều:</strong> Bấm nút trên Hộp để nháy LED/rung tim gửi tín hiệu nhớ nhau.</div>
+                                <div class="idea-chip"><strong>🍅 Đồng hồ Pomodoro:</strong> Đếm ngược tập trung 25 phút học bài / làm việc.</div>
+                                <div class="idea-chip"><strong>💬 Quote mỗi sáng:</strong> Tự đổi câu chúc / trích dẫn yêu thương mới lúc 07:00 hàng ngày.</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Right Sticky Column: ESP32 Utilities Live Simulator -->
+                    <div class="card" style="text-align: center;">
+                        <div class="card-title" style="justify-content: center;">🎛️ Xem Trước Nút Nhấn ESP32</div>
+                        <div class="box-mockup">
+                            <div class="box-led online"></div>
+                            <div class="box-screen" id="sim-screen"></div>
+                        </div>
+                        <div style="margin-top:12px; font-size:12px; color:var(--muted);">Bấm giả lập nút nhấn vật lý trên hộp:</div>
+                        <div class="box-controls">
+                            <button class="btn-sm" id="sim-btn-clock" onclick="setSimView('clock')">⏰ Đồng hồ</button>
+                            <button class="btn-sm" id="sim-btn-calendar" onclick="setSimView('calendar')">📅 Lịch hẹn</button>
+                            <button class="btn-sm" onclick="cycleSimView()">🔘 Nút bấm</button>
+                        </div>
+                    </div>
+                </div>
+            </div><!-- END TAB 2: UTILITIES -->
         </div>
     </div>
 
@@ -344,8 +502,20 @@
         };
 
         let activeBoxId = session.boxId || "LOVE01";
-        let boxInfo = { coupleName: "Anh ❤️ Em", startDate: "2024-02-14", mode: "current", slideInterval: 30, currentId: "", photos: [], lastSeen: 0 };
+        let boxInfo = { coupleName: "Anh ❤️ Em", startDate: "2024-02-14", mode: "current", slideInterval: 30, currentId: "", photos: [], lastSeen: 0, utilities: null };
         const blobUrlCache = new Map();
+        let currentTab = "photos";
+        let simView = "clock";
+
+        function defaultUtilities() {
+            return {
+                screenMode: "auto_button",
+                buttonPinMode: "cycle_pages",
+                clock: { format24h: true, showSeconds: true, showDate: true, theme: "love", nightDim: true, dimStart: "23:00", dimEnd: "06:30" },
+                alarms: [],
+                events: []
+            };
+        }
 
         // ===== FLOATING HEARTS =====
         (function spawnHearts() {
@@ -511,6 +681,8 @@
                 ledEl.className = "box-led";
             }
 
+            if (!boxInfo.utilities) boxInfo.utilities = defaultUtilities();
+            renderUtilitiesUI();
             const screen = document.getElementById("box-screen");
             const meta = document.getElementById("box-meta");
             const current = photos.find(p => p.id === boxInfo.currentId) || photos[0];
@@ -847,6 +1019,260 @@
             const res = await apiFetch("/api/admin/users/delete", { method: "POST", json: { username } });
             if (res.ok) { showToast(`🗑 Đã xóa ${username}`); loadAdminUsers(); }
         }
+
+        // ===== UTILITIES (CLOCK, ALARMS, CALENDAR UPLOAD, PHYSICAL BUTTON) =====
+        function switchTab(tab) {
+            currentTab = tab;
+            document.getElementById("tab-photos").style.display = tab === "photos" ? "block" : "none";
+            document.getElementById("tab-utilities").style.display = tab === "utilities" ? "block" : "none";
+            document.getElementById("nav-btn-photos").classList.toggle("active", tab === "photos");
+            document.getElementById("nav-btn-utilities").classList.toggle("active", tab === "utilities");
+            if (tab === "utilities") renderSimPreview();
+        }
+
+        function getUtil() {
+            if (!boxInfo.utilities) boxInfo.utilities = defaultUtilities();
+            return boxInfo.utilities;
+        }
+
+        function renderUtilitiesUI() {
+            const u = getUtil();
+            const clk = u.clock || defaultUtilities().clock;
+            document.getElementById("ut-button-mode").value = u.buttonPinMode || "cycle_pages";
+            document.getElementById("ut-screen-mode").value = u.screenMode || "auto_button";
+            document.getElementById("ut-clock-theme").value = clk.theme || "love";
+            document.getElementById("ut-24h").checked = clk.format24h !== false;
+            document.getElementById("ut-sec").checked = clk.showSeconds !== false;
+            document.getElementById("ut-date").checked = clk.showDate !== false;
+            document.getElementById("ut-nightdim").checked = Boolean(clk.nightDim);
+
+            // Render alarms
+            const alEl = document.getElementById("alarm-list");
+            const alarms = u.alarms || [];
+            const dayNames = ["CN", "T2", "T3", "T4", "T5", "T6", "T7"];
+            if (alarms.length === 0) {
+                alEl.innerHTML = '<div style="font-size:12px; color:#9ca3af; text-align:center; padding:8px;">Chưa có báo thức nào</div>';
+            } else {
+                alEl.innerHTML = "";
+                alarms.forEach((a, idx) => {
+                    const row = document.createElement("div");
+                    row.className = "util-row";
+                    const daysTxt = (a.days && a.days.length) ? a.days.map(d => dayNames[d]).join(", ") : "Một lần";
+                    row.innerHTML = `
+                        <div>
+                            <strong style="font-size:16px; color:var(--primary-dark);">${a.time}</strong>
+                            <span style="font-size:13px; font-weight:600; margin-left:6px;">${escapeHtml(a.label || "Báo thức")}</span>
+                            <div style="font-size:11px; color:var(--muted);">${daysTxt}</div>
+                        </div>
+                        <div style="display:flex; gap:6px; align-items:center;">
+                            <input type="checkbox" ${a.enabled ? "checked" : ""} onchange="toggleAlarm(${idx}, this.checked)" style="width:18px; height:18px; accent-color:var(--primary); cursor:pointer;">
+                            <button class="btn-sm danger" onclick="deleteAlarm(${idx})">✕</button>
+                        </div>
+                    `;
+                    alEl.appendChild(row);
+                });
+            }
+
+            // Render calendar events sorted by date
+            const evEl = document.getElementById("event-list");
+            const events = [...(u.events || [])].sort((a, b) => (a.date + a.time).localeCompare(b.date + b.time));
+            if (events.length === 0) {
+                evEl.innerHTML = '<div style="font-size:12px; color:#9ca3af; text-align:center; padding:8px;">Chưa có sự kiện/lịch nào</div>';
+            } else {
+                evEl.innerHTML = "";
+                const todayStr = new Date().toISOString().slice(0, 10);
+                events.forEach((ev) => {
+                    const row = document.createElement("div");
+                    row.className = "util-row";
+                    const diffDays = Math.round((new Date(ev.date + "T00:00:00") - new Date(todayStr + "T00:00:00")) / 86400000);
+                    const badge = diffDays === 0 ? "🔥 Hôm nay" : (diffDays > 0 ? `Còn ${diffDays} ngày` : `Đã qua`);
+                    row.innerHTML = `
+                        <div>
+                            <div style="font-size:13px; font-weight:700;">${escapeHtml(ev.title)}</div>
+                            <div style="font-size:11px; color:var(--muted);">📅 ${ev.date}${ev.time ? " • ⏰ " + ev.time : ""} • <strong>${badge}</strong></div>
+                        </div>
+                        <button class="btn-sm danger" onclick="deleteCalendarEvent('${ev.id}')">✕</button>
+                    `;
+                    evEl.appendChild(row);
+                });
+            }
+            renderSimPreview();
+        }
+
+        function escapeHtml(s) {
+            return String(s || "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+        }
+
+        async function saveUtilities(toastMsg = "Đã đồng bộ Tiện ích lên Hộp!") {
+            const u = getUtil();
+            u.buttonPinMode = document.getElementById("ut-button-mode").value;
+            u.screenMode = document.getElementById("ut-screen-mode").value;
+            u.clock = {
+                format24h: document.getElementById("ut-24h").checked,
+                showSeconds: document.getElementById("ut-sec").checked,
+                showDate: document.getElementById("ut-date").checked,
+                theme: document.getElementById("ut-clock-theme").value,
+                nightDim: document.getElementById("ut-nightdim").checked,
+                dimStart: "23:00",
+                dimEnd: "06:30"
+            };
+            try {
+                const res = await apiFetch("/api/box/utilities", { method: "POST", json: { boxId: activeBoxId, utilities: u } });
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.error || "Lỗi lưu tiện ích");
+                boxInfo.utilities = data.utilities;
+                renderUtilitiesUI();
+                if (toastMsg) showToast("✅ " + toastMsg);
+            } catch (err) {
+                showToast("❌ " + err.message);
+            }
+        }
+
+        async function addAlarm() {
+            const time = document.getElementById("al-time").value || "07:00";
+            const label = document.getElementById("al-label").value.trim() || "Báo thức ❤️";
+            const days = Array.from(document.querySelectorAll("#al-days-picker .day-pill.on")).map(b => Number(b.dataset.day));
+            const u = getUtil();
+            u.alarms = u.alarms || [];
+            u.alarms.push({ id: "a" + Date.now().toString(36), time, label, days, enabled: true });
+            document.getElementById("al-label").value = "";
+            await saveUtilities(`Đã thêm báo thức ${time}!`);
+        }
+
+        async function toggleAlarm(idx, enabled) {
+            const u = getUtil();
+            if (u.alarms && u.alarms[idx]) {
+                u.alarms[idx].enabled = enabled;
+                await saveUtilities(enabled ? "Đã bật báo thức" : "Đã tắt báo thức");
+            }
+        }
+
+        async function deleteAlarm(idx) {
+            const u = getUtil();
+            if (u.alarms) {
+                u.alarms.splice(idx, 1);
+                await saveUtilities("Đã xóa báo thức");
+            }
+        }
+
+        async function addCalendarEvent() {
+            const date = document.getElementById("ev-date").value;
+            const time = document.getElementById("ev-time").value || "";
+            const title = document.getElementById("ev-title").value.trim();
+            if (!date || !title) { showToast("Vui lòng nhập ngày và nội dung sự kiện!"); return; }
+            const u = getUtil();
+            u.events = u.events || [];
+            u.events.push({ id: "e" + Date.now().toString(36), date, time, title });
+            document.getElementById("ev-title").value = "";
+            await saveUtilities("Đã thêm sự kiện lịch!");
+        }
+
+        async function deleteCalendarEvent(id) {
+            const u = getUtil();
+            u.events = (u.events || []).filter(e => e.id !== id);
+            await saveUtilities("Đã xóa sự kiện");
+        }
+
+        function parseIcsOrCsv(text, filename) {
+            const parsed = [];
+            if (filename.toLowerCase().endsWith(".ics") || text.includes("BEGIN:VEVENT")) {
+                const unfolded = text.replace(/\r?\n[ \t]/g, "");
+                const blocks = unfolded.split("BEGIN:VEVENT").slice(1);
+                for (const blk of blocks) {
+                    const sumM = blk.match(/SUMMARY[^:]*:([^\r\n]+)/i);
+                    const dtM = blk.match(/DTSTART[^:]*:(\d{4})(\d{2})(\d{2})(?:T(\d{2})(\d{2}))?/i);
+                    if (sumM && dtM) {
+                        const date = `${dtM[1]}-${dtM[2]}-${dtM[3]}`;
+                        const time = (dtM[4] && dtM[5]) ? `${dtM[4]}:${dtM[5]}` : "";
+                        parsed.push({ id: "e" + Math.random().toString(36).slice(2, 9), date, time, title: sumM[1].trim().slice(0, 80) });
+                    }
+                }
+            } else {
+                const lines = text.split(/\r?\n/);
+                for (const line of lines) {
+                    const trimmed = line.trim();
+                    if (!trimmed || trimmed.startsWith("#") || trimmed.toLowerCase().startsWith("date,")) continue;
+                    const parts = trimmed.split(",").map(s => s.trim());
+                    if (parts.length >= 2 && /^\d{4}-\d{2}-\d{2}$/.test(parts[0])) {
+                        const hasTime = /^\d{2}:\d{2}$/.test(parts[1]);
+                        const time = hasTime ? parts[1] : "";
+                        const title = (hasTime ? parts.slice(2).join(", ") : parts.slice(1).join(", ")).slice(0, 80);
+                        if (title) parsed.push({ id: "e" + Math.random().toString(36).slice(2, 9), date: parts[0], time, title });
+                    }
+                }
+            }
+            return parsed;
+        }
+
+        function onUploadCalendarFile(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = async (ev) => {
+                const items = parseIcsOrCsv(String(ev.target.result || ""), file.name);
+                if (items.length === 0) {
+                    showToast("❌ Không tìm thấy sự kiện hợp lệ trong file (.ics / .csv)");
+                    return;
+                }
+                const u = getUtil();
+                u.events = (u.events || []).concat(items).slice(0, 100);
+                e.target.value = "";
+                await saveUtilities(`Đã nhập ${items.length} sự kiện từ ${file.name}!`);
+            };
+            reader.readAsText(file, "UTF-8");
+        }
+
+        function downloadSampleCsv() {
+            const csv = "date,time,title\n2026-11-20,19:30,Kỷ niệm hẹn hò ❤️\n2026-12-25,20:00,Giáng sinh cùng nhau 🎄\n2027-02-14,18:00,Valentine Ngọt Ngào 💝\n";
+            const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+            const a = document.createElement("a");
+            a.href = URL.createObjectURL(blob);
+            a.download = "lich_hop_tinh_yeu_mau.csv";
+            a.click();
+        }
+
+        function setSimView(v) { simView = v; renderSimPreview(); }
+        function cycleSimView() { simView = simView === "clock" ? "calendar" : "clock"; renderSimPreview(); }
+
+        function renderSimPreview() {
+            const el = document.getElementById("sim-screen");
+            if (!el) return;
+            const u = getUtil();
+            const clk = u.clock || defaultUtilities().clock;
+            if (simView === "clock") {
+                const now = new Date();
+                let hh = now.getHours();
+                let ampm = "";
+                if (clk.format24h === false) { ampm = hh >= 12 ? " PM" : " AM"; hh = hh % 12 || 12; }
+                const hhmm = String(hh).padStart(2, "0") + ":" + String(now.getMinutes()).padStart(2, "0");
+                const ss = clk.showSeconds !== false ? `<span class="sim-sec">:${String(now.getSeconds()).padStart(2, "0")}${ampm}</span>` : `<span class="sim-sec">${ampm}</span>`;
+                const daysVi = ["Chủ Nhật", "Thứ Hai", "Thứ Ba", "Thứ Tư", "Thứ Năm", "Thứ Sáu", "Thứ Bảy"];
+                const dateStr = clk.showDate !== false ? `${daysVi[now.getDay()]}, ${now.toLocaleDateString("vi-VN")}` : "";
+                const nextAlarm = (u.alarms || []).find(a => a.enabled);
+                const alarmHtml = nextAlarm ? `🔔 ${nextAlarm.time} • ${escapeHtml(nextAlarm.label)}` : "🔔 Chưa bật báo thức";
+                el.innerHTML = `
+                    <div class="esp-sim-clock theme-${clk.theme || "love"}">
+                        <div style="font-size:12px; opacity:0.85;">${escapeHtml(boxInfo.coupleName || "Anh ❤️ Em")}</div>
+                        <div>
+                            <div class="sim-time">${hhmm}${ss}</div>
+                            <div class="sim-date">${dateStr}</div>
+                        </div>
+                        <div style="font-size:11px; background:rgba(255,255,255,0.12); padding:6px 8px; border-radius:8px;">${alarmHtml}</div>
+                    </div>
+                `;
+            } else {
+                const events = [...(u.events || [])].sort((a, b) => (a.date + a.time).localeCompare(b.date + b.time)).slice(0, 6);
+                let itemsHtml = events.map(ev => `<div class="sim-cal-item"><strong>${ev.date} ${ev.time || ""}</strong><br>${escapeHtml(ev.title)}</div>`).join("");
+                if (!itemsHtml) itemsHtml = '<div style="color:#94a3b8; font-size:12px; margin-top:40px; text-align:center;">Chưa có lịch hẹn.<br>Hãy thêm hoặc upload file .ics / .csv!</div>';
+                el.innerHTML = `
+                    <div class="sim-cal-list">
+                        <div style="font-size:13px; font-weight:800; color:#fda4af; margin-bottom:10px; text-align:center;">📅 LỊCH SỰ KIỆN SẮP TỚI</div>
+                        ${itemsHtml}
+                    </div>
+                `;
+            }
+        }
+        setInterval(() => { if (currentTab === "utilities" && simView === "clock") renderSimPreview(); }, 1000);
 
         // Boot check
         if (session.token) {
