@@ -27,8 +27,8 @@ const char* WIFI_SSID     = "VINH NHUNG";
 const char* WIFI_PASSWORD = "YOUR_WIFI_PASSWORD"; // Thay mật khẩu Wi-Fi thực tế
 
 // ==================== 2. CẤU HÌNH GITHUB CLOUD ====================
-const char* GH_OWNER  = "YOUR_GITHUB_USERNAME";   // Tên tài khoản GitHub của bạn
-const char* GH_REPO   = "hop-tinh-yeu";           // Tên repo GitHub Pages
+const char* GH_OWNER  = "hopbian";                // Tài khoản GitHub của bạn
+const char* GH_REPO   = "hi1";                    // Tên repo GitHub Pages
 const char* GH_BRANCH = "main";
 const char* BOX_ID    = "LOVE01";                 // Mã Hộp (khớp với ?box= trên Web)
 
