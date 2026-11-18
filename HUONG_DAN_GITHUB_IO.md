@@ -1,51 +1,22 @@
-# Hướng dẫn đưa Hộp Tình Yêu lên `github.io` (Miễn phí 0đ & Cố định vĩnh viễn)
+# Hướng dẫn vận hành Hộp Tình Yêu Thương Mại (Bảo mật Tài khoản + Cloudflare + GitHub Pages)
 
-## Bước 1: Tạo Repository trên GitHub
-1. Đăng nhập GitHub → bấm **New repository** (`+` góc trên bên phải).
-2. Đặt tên repo, ví dụ: `hop-tinh-yeu`
-3. Chọn **Public** (để ESP32 tải ảnh không cần token, và GitHub Pages chạy miễn phí).
-4. Bấm **Create repository**.
+## 1. Kiến trúc hệ thống
+- **Trang Web chính (Frontend):** `https://hopbian.github.io/hi1/` (0đ vĩnh viễn trên GitHub Pages).
+- **Máy chủ API & Lưu trữ bảo mật (Backend):** `https://lovebox-api.tonepite.workers.dev` (Cloudflare Workers + KV — 0đ, chạy 24/24 toàn cầu không cần bật máy tính).
+- **Chế độ bảo mật:**
+  - Người ngoài vào web chỉ thấy màn hình **Đăng nhập** (tuyệt đối không tự tạo tài khoản được, không xem trộm được ảnh của bất kỳ hộp nào).
+  - Mọi ảnh gửi lên được mã hóa kích thước `240x320` JPEG và lưu riêng theo từng `boxId` trên Cloudflare KV.
 
----
+## 2. Cách Admin cấp tài khoản cho khách mua hộp
+1. Mở `https://hopbian.github.io/hi1/` và đăng nhập bằng **Tài khoản Admin** (đã được lưu bảo mật trong **Cloudflare Worker Secrets**, không lưu trên GitHub).
+2. Vào mục **👑 Quản Lý Tài Khoản & Hộp Thương Mại**:
+   - Nhập **Tài khoản**, **Mật khẩu** bạn tự đặt và **Mã Hộp** (VD: `LOVE01`, `LOVE02`...).
+   - Bấm **✨ Tạo Tài Khoản Khách**.
+   - Hệ thống sẽ tự sinh một **`Device Key`** riêng cho hộp đó.
+3. Giao lại cho khách: **Link web `https://hopbian.github.io/hi1/` + Tài khoản + Mật khẩu** vừa tạo.
+   - Bạn có thể **Đổi mật khẩu**, **Khóa/Mở khóa**, hoặc **Xóa** tài khoản khách bất cứ lúc nào.
 
-## Bước 2: Đẩy thư mục `hop-tinh-yeu-github` lên Repo đó
-Mở PowerShell tại thư mục `d:\build lai dt cu thanh bot tele ko bao h bi sap\hop-tinh-yeu-github` và chạy:
-```bash
-git init
-git add .
-git commit -m "Khoi tao Hop Tinh Yeu Cloud"
-git branch -M main
-git remote add origin https://github.com/<TEN_TAI_KHOAN_CUA_BAN>/hop-tinh-yeu.git
-git push -u origin main
-```
-
----
-
-## Bước 3: Bật GitHub Pages (`*.github.io`)
-1. Vào Repo vừa tạo trên GitHub → chọn tab **Settings** → bên trái chọn **Pages**.
-2. Ở mục **Build and deployment** → **Branch**: chọn **`main`** và thư mục **`/ (root)`** → bấm **Save**.
-3. Chờ khoảng 30–60 giây, trang web cố định vĩnh viễn của bạn sẽ hiện ra tại:
-   👉 **`https://<TEN_TAI_KHOAN_CUA_BAN>.github.io/hop-tinh-yeu/`**
-
----
-
-## Bước 4: Tạo Chìa Khóa (Fine-grained Token) để Web gửi ảnh lên Hộp
-1. Trên GitHub, bấm Avatar góc phải → **Settings** → kéo xuống dưới cùng chọn **Developer settings** → **Personal access tokens** → **Fine-grained tokens** → **Generate new token**.
-2. Đặt tên: `HopTinhYeu-Key`, Expiration: **No expiration** (hoặc 1 năm).
-3. Ở mục **Repository access**: chọn **Only select repositories** → chọn đúng repo `hop-tinh-yeu` (rất an toàn, token không chạm được vào các repo khác của bạn!).
-4. Ở mục **Permissions** → **Repository permissions** → dòng **Contents**: chọn **Read and write**.
-5. Bấm **Generate token** và copy đoạn mã `github_pat_...`.
-
----
-
-## Bước 5: Kết nối Web & Tạo Link Tặng Người Yêu / Khách Hàng
-1. Mở trang web **`https://<TEN_TAI_KHOAN_CUA_BAN>.github.io/hop-tinh-yeu/`**.
-2. Bấm **⚙️ Cài đặt & Chia sẻ** → dán **GitHub Owner**, **Tên Repo**, **Mã Hộp (`LOVE01`)**, và **Token** → bấm **Lưu Cài Đặt**.
-3. Copy đường link ở ô **Link Tặng Người Yêu / Khách Hàng** (có dạng `.../?box=LOVE01#key=github_pat_...`) gửi cho người yêu hoặc tạo mã QR dán vào Hộp. Người nhận chỉ cần mở link 1 lần là từ sau up ảnh trực tiếp ngay!
-
----
-
-## Bước 6: Nạp code vào ESP32
+## 3. Cách nạp code cho mỗi chiếc Hộp ESP32 (240x320 TFT SPI)
 1. Mở file `esp32_lovebox_github.ino` bằng Arduino IDE.
-2. Sửa `WIFI_SSID`, `WIFI_PASSWORD`, `GH_OWNER` (tên tài khoản GitHub của bạn), `GH_REPO` (`hop-tinh-yeu`).
-3. Nạp vào ESP32 lần đầu bằng cáp USB (những lần sau nạp không dây qua Wi-Fi OTA!).
+2. Điền thông tin Wi-Fi (`WIFI_SSID`, `WIFI_PASSWORD`), `BOX_ID` (VD: `LOVE01`) và `DEVICE_KEY` tương ứng lấy từ bảng Admin.
+3. Nạp code lần đầu qua USB; các lần sau nạp code không dây qua Wi-Fi (`ArduinoOTA`).

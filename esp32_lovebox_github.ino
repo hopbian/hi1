@@ -1,17 +1,10 @@
 /*
  * =========================================================================
- *      HỘP TÌNH YÊU 💕 - ESP32 FIRMWARE (CHẠY QUA GITHUB.IO / GITHUB CLOUD)
- *   - Hoạt động 24/24 toàn cầu, không phụ thuộc máy tính hay điện thoại ở nhà
+ *    HỘP TÌNH YÊU 💕 - ESP32 FIRMWARE (BẢO MẬT BẰNG DEVICE KEY + OTA)
+ *   - Kết nối Cloudflare Worker API (0đ, 24/24, siêu nhanh 15 giây kiểm tra 1 lần)
  *   - Màn hình: 240x320 TFT SPI (ST7789 / ILI9341 - Chuẩn ROHS)
  *   - Tích hợp OTA: Nạp code không dây qua Wi-Fi
  * =========================================================================
- *
- * Thư viện cần cài trong Arduino IDE (Sketch -> Include Library -> Manage Libraries):
- *   1. TFT_eSPI (Bodmer)
- *   2. TJpg_Decoder (Bodmer)
- *   3. ArduinoJson (Benoit Blanchon)
- *
- * Nhớ cấu hình chân màn hình trong User_Setup.h của thư viện TFT_eSPI!
  */
 
 #include <WiFi.h>
@@ -26,37 +19,30 @@
 const char* WIFI_SSID     = "VINH NHUNG";
 const char* WIFI_PASSWORD = "YOUR_WIFI_PASSWORD"; // Thay mật khẩu Wi-Fi thực tế
 
-// ==================== 2. CẤU HÌNH GITHUB CLOUD ====================
-const char* GH_OWNER  = "hopbian";                // Tài khoản GitHub của bạn
-const char* GH_REPO   = "hi1";                    // Tên repo GitHub Pages
-const char* GH_BRANCH = "main";
-const char* BOX_ID    = "LOVE01";                 // Mã Hộp (khớp với ?box= trên Web)
+// ==================== 2. CẤU HÌNH HỘP BẢO MẬT ====================
+// Lấy BOX_ID và DEVICE_KEY trong bảng Quản Lý Admin trên web hopbian.github.io/hi1/
+const char* API_BASE   = "https://lovebox-api.tonepite.workers.dev";
+const char* BOX_ID     = "LOVE01";
+const char* DEVICE_KEY = "PASTE_DEVICE_KEY_HERE";
 
-// (Tùy chọn) Để trống "" nếu Repo là Public (mỗi 75s kiểm tra 1 lần - thoải mái giới hạn free).
-// Nếu muốn Repo là Private hoặc check nhanh mỗi 10s, điền Token chỉ-đọc vào đây:
-const char* GH_READ_TOKEN = "";
-
-// Thời gian kiểm tra ảnh mới từ GitHub (75 giây = ~48 lần/giờ, an toàn 100% Free không cần Token)
-const unsigned long POLL_INTERVAL_MS = 75000;
-// Thời gian đổi ảnh khi bật chế độ Slideshow
-const unsigned long SLIDE_INTERVAL_MS = 30000;
+// Kiểm tra ảnh mới mỗi 15 giây (Cloudflare miễn phí 100.000 lượt/ngày, rất thoải mái)
+const unsigned long POLL_INTERVAL_MS = 15000;
 
 TFT_eSPI tft = TFT_eSPI();
 
 String currentMode = "current";
 String targetPhotoId = "";
 String displayedPhotoId = "";
+unsigned long slideIntervalMs = 30000;
 
 #define MAX_PHOTOS 30
 String photoIds[MAX_PHOTOS];
-String photoFiles[MAX_PHOTOS];
 int photoCount = 0;
 int slideIndex = 0;
 
 unsigned long lastPollTime = 0;
 unsigned long lastSlideTime = 0;
 
-// Buffer Stream giúp HTTPClient::writeToStream giải mã chuẩn cả Content-Length & Chunked
 class JpgMemStream : public Stream {
 public:
     uint8_t* buf;
@@ -142,10 +128,10 @@ void setup() {
     }
 
     Serial.println("\nWi-Fi Connected! IP: " + WiFi.localIP().toString());
-    drawStatusScreen("HOP TINH YEU <3", "Ket noi Cloud thanh cong!\nDang tai ky niem...");
+    drawStatusScreen("HOP TINH YEU <3", "Ket noi Cloud OK!\nDang tai ky niem...");
 
     setupOTA();
-    pollGitHubInfo();
+    pollServer();
 }
 
 void loop() {
@@ -154,17 +140,17 @@ void loop() {
     unsigned long now = millis();
     if (now - lastPollTime >= POLL_INTERVAL_MS || lastPollTime == 0) {
         lastPollTime = now;
-        pollGitHubInfo();
+        pollServer();
     }
 
-    if (currentMode == "slideshow" && photoCount > 1 && (now - lastSlideTime >= SLIDE_INTERVAL_MS)) {
+    if (currentMode == "slideshow" && photoCount > 1 && (now - lastSlideTime >= slideIntervalMs)) {
         lastSlideTime = now;
         slideIndex = (slideIndex + 1) % photoCount;
-        showPhotoByIndex(slideIndex);
+        downloadAndShowPhoto(photoIds[slideIndex]);
     }
 }
 
-void pollGitHubInfo() {
+void pollServer() {
     if (WiFi.status() != WL_CONNECTED) {
         WiFi.reconnect();
         return;
@@ -173,40 +159,29 @@ void pollGitHubInfo() {
     WiFiClientSecure client;
     client.setInsecure();
 
-    String apiUrl = String("https://api.github.com/repos/") + GH_OWNER + "/" + GH_REPO +
-                    "/contents/boxes/" + BOX_ID + "/info.json?ref=" + GH_BRANCH;
-
+    String pollUrl = String(API_BASE) + "/api/esp/poll?box=" + BOX_ID + "&key=" + DEVICE_KEY;
     HTTPClient https;
-    if (!https.begin(client, apiUrl)) return;
-
-    https.addHeader("User-Agent", "LoveBox-ESP32"); // Bắt buộc với GitHub API
-    https.addHeader("Accept", "application/vnd.github.v3.raw");
-    if (strlen(GH_READ_TOKEN) > 0) {
-        https.addHeader("Authorization", String("Bearer ") + GH_READ_TOKEN);
-    }
+    if (!https.begin(client, pollUrl)) return;
 
     int code = https.GET();
     if (code == HTTP_CODE_OK) {
         String payload = https.getString();
         https.end();
 
-        DynamicJsonDocument doc(12288);
+        DynamicJsonDocument doc(8192);
         DeserializationError err = deserializeJson(doc, payload);
-        if (err) {
-            Serial.println("JSON parse error: " + String(err.c_str()));
-            return;
-        }
+        if (err) return;
 
-        currentMode   = doc["mode"] | "current";
-        targetPhotoId = doc["currentId"] | "";
+        currentMode     = doc["mode"] | "current";
+        targetPhotoId   = doc["currentId"] | "";
+        unsigned long sec = doc["slideInterval"] | 30;
+        slideIntervalMs = sec * 1000UL;
 
         JsonArray arr = doc["photos"].as<JsonArray>();
         photoCount = 0;
         for (JsonObject obj : arr) {
             if (photoCount >= MAX_PHOTOS) break;
-            photoIds[photoCount]   = obj["id"] | "";
-            photoFiles[photoCount] = obj["file"] | "";
-            photoCount++;
+            photoIds[photoCount++] = obj["id"] | "";
         }
 
         if (photoCount == 0) {
@@ -215,54 +190,40 @@ void pollGitHubInfo() {
         }
 
         if (currentMode == "current") {
-            int idx = 0;
-            for (int i = 0; i < photoCount; i++) {
-                if (photoIds[i] == targetPhotoId) { idx = i; break; }
-            }
-            if (photoIds[idx] != displayedPhotoId) {
-                showPhotoByIndex(idx);
+            String desired = targetPhotoId != "" ? targetPhotoId : photoIds[0];
+            if (desired != displayedPhotoId) {
+                downloadAndShowPhoto(desired);
             }
         } else if (displayedPhotoId == "") {
             slideIndex = 0;
             lastSlideTime = millis();
-            showPhotoByIndex(0);
+            downloadAndShowPhoto(photoIds[0]);
         }
     } else {
-        Serial.printf("GitHub API Error: %d\n", code);
+        Serial.printf("Poll Error: %d\n", code);
         https.end();
     }
 }
 
-void showPhotoByIndex(int idx) {
-    if (idx < 0 || idx >= photoCount) return;
-    String id = photoIds[idx];
-    String relFile = photoFiles[idx];
-    if (relFile == "") return;
-
-    String photoUrl = String("https://raw.githubusercontent.com/") + GH_OWNER + "/" + GH_REPO +
-                      "/" + GH_BRANCH + "/boxes/" + BOX_ID + "/" + relFile;
-
-    Serial.println("Downloading: " + photoUrl);
+void downloadAndShowPhoto(String id) {
+    if (id == "") return;
+    String photoUrl = String(API_BASE) + "/api/esp/photo?box=" + BOX_ID + "&key=" + DEVICE_KEY + "&id=" + id;
 
     WiFiClientSecure client;
     client.setInsecure();
 
     HTTPClient https;
     if (!https.begin(client, photoUrl)) return;
-    https.addHeader("User-Agent", "LoveBox-ESP32");
-    if (strlen(GH_READ_TOKEN) > 0) {
-        https.addHeader("Authorization", String("Bearer ") + GH_READ_TOKEN);
-    }
 
     int code = https.GET();
     if (code == HTTP_CODE_OK) {
-        JpgMemStream mem(85000); // Tối đa 85KB cho 1 ảnh 240x320 (~15-25KB thực tế)
+        JpgMemStream mem(100000);
         if (mem.buf != nullptr) {
             https.writeToStream(&mem);
             if (mem.len > 0) {
-                uint16_t res = TJpgDec.drawJpg(0, 0, mem.buf, mem.len);
-                Serial.printf("Ve anh %s (%u bytes) -> result=%u\n", id.c_str(), (unsigned)mem.len, res);
+                TJpgDec.drawJpg(0, 0, mem.buf, mem.len);
                 displayedPhotoId = id;
+                Serial.printf("Hien thi anh %s (%u bytes)\n", id.c_str(), (unsigned)mem.len);
             }
         }
     } else {
