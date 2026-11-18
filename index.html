@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Hộp Tình Yêu 💕 Love Box Cloud</title>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💝</text></svg>">
+    <script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js"></script>
     <style>
         :root {
             --primary: #ff3b72;
@@ -229,6 +230,13 @@
                         <div id="admin-users-list">Đang tải...</div>
                     </div>
                 </div>
+                <div style="margin-top: 18px; border-top: 1px dashed #fcd34d; padding-top: 14px;">
+                    <div class="card-title" style="margin-bottom: 8px;">
+                        <span>💬 Hộp Thư Góp Ý &amp; Yêu Cầu Tính Năng Từ Khách Hàng</span>
+                        <button class="btn-sm" onclick="loadAdminFeedback()">🔄 Tải góp ý</button>
+                    </div>
+                    <div id="admin-feedback-list" style="font-size: 13px; color: var(--muted);">Đang tải...</div>
+                </div>
             </div>
 
             <!-- Love Counter -->
@@ -247,6 +255,7 @@
             <div class="nav-tabs">
                 <button class="nav-tab active" id="nav-btn-photos" onclick="switchTab('photos')">📸 Ảnh &amp; Màn Hình Hộp</button>
                 <button class="nav-tab" id="nav-btn-utilities" onclick="switchTab('utilities')">🧩 Tiện Ích</button>
+                <button class="nav-tab" id="nav-btn-feedback" onclick="switchTab('feedback')">💬 Gửi Góp Ý Admin</button>
             </div>
 
             <!-- TAB 1: PHOTOS & ALBUM -->
@@ -360,6 +369,8 @@
                                         <option value="photo">📸 Ảnh kỷ niệm</option>
                                         <option value="clock">⏰ Đồng hồ &amp; Ngày tháng</option>
                                         <option value="calendar">📅 Lịch hẹn &amp; Sự kiện</option>
+                                        <option value="pomodoro">🍅 Đồng hồ Pomodoro</option>
+                                        <option value="qr">🎵 Mã QR Kỷ niệm</option>
                                     </select>
                                 </div>
                                 <div class="form-group">
@@ -376,6 +387,7 @@
                                 <label class="check-row"><input type="checkbox" id="ut-sec" checked onchange="saveUtilities(); renderSimPreview();"> <span>Hiện giây</span></label>
                                 <label class="check-row"><input type="checkbox" id="ut-date" checked onchange="saveUtilities(); renderSimPreview();"> <span>Hiện Thứ &amp; Ngày/Tháng</span></label>
                                 <label class="check-row"><input type="checkbox" id="ut-nightdim" checked onchange="saveUtilities()"> <span>Giảm sáng đêm (23:00–06:30)</span></label>
+                                <label class="check-row"><input type="checkbox" id="ut-lunar" checked onchange="saveUtilities(); renderSimPreview();"> <span>Hiện Âm lịch &amp; Ngày lễ VN</span></label>
                             </div>
                         </div>
 
@@ -411,7 +423,72 @@
                             <div id="alarm-list" style="margin-top:12px;"></div>
                         </div>
 
-                        <!-- Card 3: Upload Lịch & Ngày kỷ niệm -->
+                        <!-- Card 3: Thả tim hai chiều -->
+                        <div class="card">
+                            <div class="card-title">
+                                <span>💓 Thả Tim Hai Chiều (Web ↔ Hộp ESP32)</span>
+                                <span id="heart-from-box-badge" style="font-size:11px; color:var(--primary-dark);"></span>
+                            </div>
+                            <div class="form-group">
+                                <label>Tin nhắn nhịp tim gửi sang màn hình Hộp:</label>
+                                <input type="text" id="ht-msg" value="Anh đang nhớ em 💓">
+                            </div>
+                            <button class="btn-love" onclick="sendHeartPing()">💓 Thả Tim Tới Hộp Ngay!</button>
+                        </div>
+
+                        <!-- Card 4: Thời tiết địa phương -->
+                        <div class="card">
+                            <div class="card-title">
+                                <span>🌤️ Thời Tiết Địa Phương &amp; Nhắc Mang Áo Mưa</span>
+                                <span id="weather-live-badge" style="font-size:12px; font-weight:700; color:#0284c7;"></span>
+                            </div>
+                            <label class="check-row"><input type="checkbox" id="wt-enabled" checked onchange="saveUtilities()"> <span>Bật hiển thị thời tiết trên Hộp</span></label>
+                            <div class="inline-2">
+                                <div class="form-group">
+                                    <label>Chọn nhanh tỉnh / thành phố:</label>
+                                    <select id="wt-preset" onchange="onSelectWeatherCity()">
+                                        <option value="21.0285,105.8542,Hà Nội">Hà Nội</option>
+                                        <option value="10.8231,106.6297,TP.HCM">TP. Hồ Chí Minh</option>
+                                        <option value="16.0544,108.2022,Đà Nẵng">Đà Nẵng</option>
+                                        <option value="20.8449,106.6881,Hải Phòng">Hải Phòng</option>
+                                        <option value="10.0452,105.7469,Cần Thơ">Cần Thơ</option>
+                                        <option value="11.9404,108.4583,Đà Lạt">Đà Lạt</option>
+                                        <option value="custom">Tùy chỉnh tọa độ khác...</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label>Tên hiển thị:</label>
+                                    <input type="text" id="wt-city" value="Hà Nội">
+                                </div>
+                            </div>
+                            <div class="inline-2">
+                                <div class="form-group"><label>Vĩ độ (Lat):</label><input type="text" id="wt-lat" value="21.0285"></div>
+                                <div class="form-group"><label>Kinh độ (Lon):</label><input type="text" id="wt-lon" value="105.8542"></div>
+                            </div>
+                            <div class="form-group"><label>Lời nhắc khi trời mưa:</label><input type="text" id="wt-raintip" value="Trời sắp mưa nhớ mang áo mưa ❤️"></div>
+                            <button class="btn-love" onclick="saveUtilities('Đã lưu cấu hình thời tiết!'); fetchLiveWeatherPreview();">🌤️ Lưu &amp; Kiểm Tra Thời Tiết</button>
+                        </div>
+
+                        <!-- Card 5: Pomodoro & Quote mỗi sáng -->
+                        <div class="card">
+                            <div class="card-title"><span>🍅 Đồng Hồ Pomodoro &amp; 💬 Quote Yêu Thương Mỗi Sáng</span></div>
+                            <label class="check-row"><input type="checkbox" id="pm-enabled" checked onchange="saveUtilities()"> <span>Bật trang Pomodoro trong vòng xoay nút bấm</span></label>
+                            <div class="inline-2">
+                                <div class="form-group"><label>Phút tập trung:</label><input type="number" id="pm-focus" min="5" max="90" value="25"></div>
+                                <div class="form-group"><label>Phút nghỉ:</label><input type="number" id="pm-break" min="1" max="30" value="5"></div>
+                            </div>
+                            <div class="form-group"><label>Nhãn hiển thị Pomodoro:</label><input type="text" id="pm-label" value="Tập trung học/làm việc"></div>
+
+                            <hr style="border:none; border-top:1px dashed #fbcfe8; margin:16px 0;">
+                            <label class="check-row"><input type="checkbox" id="qt-enabled" checked onchange="saveUtilities()"> <span>Hiện Quote chúc ngày mới lúc sáng sớm</span></label>
+                            <div class="form-group">
+                                <label>Danh sách câu Quote (mỗi dòng 1 câu, tự đổi mỗi ngày):</label>
+                                <textarea id="qt-list" style="min-height:86px;"></textarea>
+                            </div>
+                            <button class="btn-love" onclick="saveUtilities('Đã lưu Pomodoro & Quote mỗi sáng!')">💾 Lưu Pomodoro &amp; Quote</button>
+                        </div>
+
+                        <!-- Card 6: Upload Lịch & Ngày kỷ niệm -->
                         <div class="card">
                             <div class="card-title">
                                 <span>📅 Ngày Tháng &amp; Upload Lịch Sự Kiện</span>
@@ -432,15 +509,13 @@
                             <div id="event-list" style="margin-top:12px;"></div>
                         </div>
 
-                        <!-- Card 4: Gợi ý mở rộng -->
+                        <!-- Card 7: Mã QR Bài hát / Kỷ niệm -->
                         <div class="card">
-                            <div class="card-title"><span>💡 Gợi Ý Tiện Ích Có Thể Tích Hợp Thêm</span></div>
-                            <div class="inline-2">
-                                <div class="idea-chip"><strong>🌤️ Thời tiết địa phương:</strong> Hiện nhiệt độ &amp; nhắc "Trời sắp mưa nhớ mang áo mưa ❤️".</div>
-                                <div class="idea-chip"><strong>💓 Thả tim hai chiều:</strong> Bấm nút trên Hộp để nháy LED/rung tim gửi tín hiệu nhớ nhau.</div>
-                                <div class="idea-chip"><strong>🍅 Đồng hồ Pomodoro:</strong> Đếm ngược tập trung 25 phút học bài / làm việc.</div>
-                                <div class="idea-chip"><strong>💬 Quote mỗi sáng:</strong> Tự đổi câu chúc / trích dẫn yêu thương mới lúc 07:00 hàng ngày.</div>
-                            </div>
+                            <div class="card-title"><span>🎵 Mã QR Bài Hát Spotify / Video Kỷ Niệm</span></div>
+                            <label class="check-row"><input type="checkbox" id="qr-enabled" onchange="saveQrUtility()"> <span>Bật trang Mã QR trên màn hình Hộp ESP32</span></label>
+                            <div class="form-group"><label>Tiêu đề trên màn hình:</label><input type="text" id="qr-title" value="Bài hát của hai đứa 🎵"></div>
+                            <div class="form-group"><label>Đường dẫn (Spotify, YouTube, TikTok, Drive...):</label><input type="text" id="qr-url" placeholder="https://open.spotify.com/track/..."></div>
+                            <button class="btn-love" onclick="saveQrUtility()">📲 Tạo Mã QR &amp; Đẩy Lên Hộp</button>
                         </div>
                     </div>
 
@@ -453,13 +528,47 @@
                         </div>
                         <div style="margin-top:12px; font-size:12px; color:var(--muted);">Bấm giả lập nút nhấn vật lý trên hộp:</div>
                         <div class="box-controls">
-                            <button class="btn-sm" id="sim-btn-clock" onclick="setSimView('clock')">⏰ Đồng hồ</button>
-                            <button class="btn-sm" id="sim-btn-calendar" onclick="setSimView('calendar')">📅 Lịch hẹn</button>
+                            <button class="btn-sm" onclick="setSimView('clock')">⏰ Đồng hồ</button>
+                            <button class="btn-sm" onclick="setSimView('calendar')">📅 Lịch</button>
+                            <button class="btn-sm" onclick="setSimView('pomodoro')">🍅 Pomo</button>
+                        </div>
+                        <div class="box-controls" style="margin-top:6px;">
+                            <button class="btn-sm" onclick="setSimView('qr')">🎵 Mã QR</button>
+                            <button class="btn-sm" onclick="setSimView('heart')">💓 Thả tim</button>
                             <button class="btn-sm" onclick="cycleSimView()">🔘 Nút bấm</button>
                         </div>
                     </div>
                 </div>
             </div><!-- END TAB 2: UTILITIES -->
+
+            <!-- TAB 3: CUSTOMER FEEDBACK TO ADMIN -->
+            <div id="tab-feedback" style="display: none;">
+                <div class="grid">
+                    <div class="card">
+                        <div class="card-title"><span>💬 Gửi Góp Ý / Yêu Cầu Tính Năng Tới Admin</span></div>
+                        <div class="form-group">
+                            <label>Phân loại góp ý:</label>
+                            <select id="fb-category">
+                                <option value="feature">✨ Đề xuất thêm tính năng mới</option>
+                                <option value="bug">🐛 Báo lỗi cần Admin kiểm tra</option>
+                                <option value="note">💌 Góp ý / Lời nhắn tới Admin</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Nội dung gửi thẳng tới tài khoản Admin:</label>
+                            <textarea id="fb-message" style="min-height: 110px;" placeholder="Ví dụ: Mình muốn thêm đồng hồ đếm ngược thi đại học hoặc thêm hiển thị giá vàng..."></textarea>
+                        </div>
+                        <button class="btn-love" id="btn-send-fb" onclick="submitFeedback()">📨 Gửi Thẳng Tới Admin</button>
+                    </div>
+                    <div class="card">
+                        <div class="card-title">
+                            <span>📬 Góp Ý Của Bạn Đã Gửi</span>
+                            <button class="btn-sm" onclick="loadMyFeedback()">🔄 Tải lại</button>
+                        </div>
+                        <div id="my-feedback-list" style="font-size:13px; color:var(--muted);">Chưa gửi góp ý nào.</div>
+                    </div>
+                </div>
+            </div><!-- END TAB 3: FEEDBACK -->
         </div>
     </div>
 
@@ -506,12 +615,19 @@
         const blobUrlCache = new Map();
         let currentTab = "photos";
         let simView = "clock";
+        let liveWeather = null;
 
         function defaultUtilities() {
             return {
                 screenMode: "auto_button",
                 buttonPinMode: "cycle_pages",
                 clock: { format24h: true, showSeconds: true, showDate: true, theme: "love", nightDim: true, dimStart: "23:00", dimEnd: "06:30" },
+                weather: { enabled: true, city: "Hà Nội", lat: 21.0285, lon: 105.8542, rainTip: "Trời sắp mưa nhớ mang áo mưa ❤️" },
+                heart: { pulseId: 0, msg: "Anh đang nhớ em 💓", lastFromWebAt: 0, lastFromBoxAt: 0, fromBoxMsg: "" },
+                pomodoro: { enabled: true, focusMin: 25, breakMin: 5, label: "Tập trung học/làm việc" },
+                morningQuote: { enabled: true, time: "07:00", quotes: ["Chúc em ngày mới thật nhiều niềm vui ❤️", "Mỗi ngày bên em đều là ngày tuyệt vời nhất 💕", "Nhớ uống đủ nước và giữ ấm nhé!"] },
+                lunarHoliday: { enabled: true, showLunar: true, showHolidays: true },
+                qrLink: { enabled: false, title: "Bài hát của hai đứa 🎵", url: "", matrix: "" },
                 alarms: [],
                 events: []
             };
@@ -617,8 +733,10 @@
             if (session.role === "admin") {
                 document.getElementById("admin-panel").style.display = "block";
                 loadAdminUsers();
+                loadAdminFeedback();
             }
             await loadBoxData(false);
+            loadMyFeedback();
         }
 
         // ===== COUNTER =====
@@ -1020,24 +1138,44 @@
             if (res.ok) { showToast(`🗑 Đã xóa ${username}`); loadAdminUsers(); }
         }
 
-        // ===== UTILITIES (CLOCK, ALARMS, CALENDAR UPLOAD, PHYSICAL BUTTON) =====
+        // ===== UTILITIES (CLOCK, ALARMS, WEATHER, HEART, POMODORO, QUOTES, CALENDAR, QR) =====
         function switchTab(tab) {
             currentTab = tab;
             document.getElementById("tab-photos").style.display = tab === "photos" ? "block" : "none";
             document.getElementById("tab-utilities").style.display = tab === "utilities" ? "block" : "none";
+            document.getElementById("tab-feedback").style.display = tab === "feedback" ? "block" : "none";
             document.getElementById("nav-btn-photos").classList.toggle("active", tab === "photos");
             document.getElementById("nav-btn-utilities").classList.toggle("active", tab === "utilities");
-            if (tab === "utilities") renderSimPreview();
+            document.getElementById("nav-btn-feedback").classList.toggle("active", tab === "feedback");
+            if (tab === "utilities") {
+                renderSimPreview();
+                fetchLiveWeatherPreview();
+            }
+            if (tab === "feedback") loadMyFeedback();
         }
 
         function getUtil() {
-            if (!boxInfo.utilities) boxInfo.utilities = defaultUtilities();
+            const def = defaultUtilities();
+            const cur = boxInfo.utilities || {};
+            boxInfo.utilities = {
+                ...def,
+                ...cur,
+                clock: { ...def.clock, ...(cur.clock || {}) },
+                weather: { ...def.weather, ...(cur.weather || {}) },
+                heart: { ...def.heart, ...(cur.heart || {}) },
+                pomodoro: { ...def.pomodoro, ...(cur.pomodoro || {}) },
+                morningQuote: { ...def.morningQuote, ...(cur.morningQuote || {}) },
+                lunarHoliday: { ...def.lunarHoliday, ...(cur.lunarHoliday || {}) },
+                qrLink: { ...def.qrLink, ...(cur.qrLink || {}) },
+                alarms: Array.isArray(cur.alarms) ? cur.alarms : [],
+                events: Array.isArray(cur.events) ? cur.events : []
+            };
             return boxInfo.utilities;
         }
 
         function renderUtilitiesUI() {
             const u = getUtil();
-            const clk = u.clock || defaultUtilities().clock;
+            const clk = u.clock;
             document.getElementById("ut-button-mode").value = u.buttonPinMode || "cycle_pages";
             document.getElementById("ut-screen-mode").value = u.screenMode || "auto_button";
             document.getElementById("ut-clock-theme").value = clk.theme || "love";
@@ -1045,6 +1183,32 @@
             document.getElementById("ut-sec").checked = clk.showSeconds !== false;
             document.getElementById("ut-date").checked = clk.showDate !== false;
             document.getElementById("ut-nightdim").checked = Boolean(clk.nightDim);
+            document.getElementById("ut-lunar").checked = u.lunarHoliday.enabled !== false;
+
+            // Heart & Weather & Pomodoro & Quote & QR inputs
+            if (u.heart.lastFromBoxAt) {
+                const tStr = new Date(u.heart.lastFromBoxAt).toLocaleTimeString("vi-VN");
+                document.getElementById("heart-from-box-badge").textContent = `💓 Hộp thả tim lúc ${tStr}`;
+            } else {
+                document.getElementById("heart-from-box-badge").textContent = "";
+            }
+            document.getElementById("wt-enabled").checked = Boolean(u.weather.enabled);
+            document.getElementById("wt-city").value = u.weather.city || "Hà Nội";
+            document.getElementById("wt-lat").value = u.weather.lat || "21.0285";
+            document.getElementById("wt-lon").value = u.weather.lon || "105.8542";
+            document.getElementById("wt-raintip").value = u.weather.rainTip || "";
+
+            document.getElementById("pm-enabled").checked = Boolean(u.pomodoro.enabled);
+            document.getElementById("pm-focus").value = u.pomodoro.focusMin || 25;
+            document.getElementById("pm-break").value = u.pomodoro.breakMin || 5;
+            document.getElementById("pm-label").value = u.pomodoro.label || "Tập trung học/làm việc";
+
+            document.getElementById("qt-enabled").checked = Boolean(u.morningQuote.enabled);
+            document.getElementById("qt-list").value = (u.morningQuote.quotes || []).join("\n");
+
+            document.getElementById("qr-enabled").checked = Boolean(u.qrLink.enabled);
+            document.getElementById("qr-title").value = u.qrLink.title || "Bài hát của hai đứa 🎵";
+            document.getElementById("qr-url").value = u.qrLink.url || "";
 
             // Render alarms
             const alEl = document.getElementById("alarm-list");
@@ -1103,6 +1267,72 @@
             return String(s || "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
         }
 
+        function onSelectWeatherCity() {
+            const v = document.getElementById("wt-preset").value;
+            if (v === "custom") return;
+            const [lat, lon, city] = v.split(",");
+            document.getElementById("wt-lat").value = lat;
+            document.getElementById("wt-lon").value = lon;
+            document.getElementById("wt-city").value = city;
+        }
+
+        async function fetchLiveWeatherPreview() {
+            const u = getUtil();
+            const lat = document.getElementById("wt-lat").value || u.weather.lat || "21.0285";
+            const lon = document.getElementById("wt-lon").value || u.weather.lon || "105.8542";
+            const city = document.getElementById("wt-city").value || u.weather.city || "Hà Nội";
+            try {
+                const res = await apiFetch(`/api/weather?lat=${encodeURIComponent(lat)}&lon=${encodeURIComponent(lon)}&city=${encodeURIComponent(city)}`);
+                const d = await res.json();
+                if (d && d.weather) {
+                    liveWeather = d.weather;
+                    document.getElementById("weather-live-badge").textContent = `${d.weather.temp}°C • ${d.weather.desc}`;
+                    renderSimPreview();
+                }
+            } catch {}
+        }
+
+        async function sendHeartPing() {
+            const msg = document.getElementById("ht-msg").value.trim() || "Anh đang nhớ em 💓";
+            const res = await apiFetch("/api/box/ping-heart", { method: "POST", json: { boxId: activeBoxId, msg } });
+            if (res.ok) {
+                const d = await res.json();
+                getUtil().heart = d.heart;
+                showToast("💓 Đã bắn tín hiệu nhịp tim tới ESP32!");
+                setSimView("heart");
+            }
+        }
+
+        function computeQrMatrix(url) {
+            if (!url || typeof qrcode !== "function") return "";
+            const qr = qrcode(0, "M");
+            qr.addData(url);
+            qr.make();
+            const count = qr.getModuleCount();
+            let bits = "";
+            for (let r = 0; r < count; r++) {
+                for (let c = 0; c < count; c++) {
+                    bits += qr.isDark(r, c) ? "1" : "0";
+                }
+            }
+            return `${count}|${bits}`;
+        }
+
+        async function saveQrUtility() {
+            const u = getUtil();
+            const url = document.getElementById("qr-url").value.trim();
+            const enabled = document.getElementById("qr-enabled").checked;
+            if (enabled && !url) { showToast("Nhập link Spotify / YouTube / Kỷ niệm trước nhé!"); return; }
+            u.qrLink = {
+                enabled,
+                title: document.getElementById("qr-title").value.trim() || "Bài hát của hai đứa 🎵",
+                url,
+                matrix: url ? computeQrMatrix(url) : ""
+            };
+            await saveUtilities("Đã tạo Mã QR & đồng bộ lên Hộp!");
+            setSimView("qr");
+        }
+
         async function saveUtilities(toastMsg = "Đã đồng bộ Tiện ích lên Hộp!") {
             const u = getUtil();
             u.buttonPinMode = document.getElementById("ut-button-mode").value;
@@ -1115,6 +1345,25 @@
                 nightDim: document.getElementById("ut-nightdim").checked,
                 dimStart: "23:00",
                 dimEnd: "06:30"
+            };
+            u.lunarHoliday = { enabled: document.getElementById("ut-lunar").checked, showLunar: true, showHolidays: true };
+            u.weather = {
+                enabled: document.getElementById("wt-enabled").checked,
+                city: document.getElementById("wt-city").value.trim() || "Hà Nội",
+                lat: Number(document.getElementById("wt-lat").value) || 21.0285,
+                lon: Number(document.getElementById("wt-lon").value) || 105.8542,
+                rainTip: document.getElementById("wt-raintip").value.trim() || "Trời sắp mưa nhớ mang áo mưa ❤️"
+            };
+            u.pomodoro = {
+                enabled: document.getElementById("pm-enabled").checked,
+                focusMin: Number(document.getElementById("pm-focus").value) || 25,
+                breakMin: Number(document.getElementById("pm-break").value) || 5,
+                label: document.getElementById("pm-label").value.trim() || "Tập trung học/làm việc"
+            };
+            u.morningQuote = {
+                enabled: document.getElementById("qt-enabled").checked,
+                time: "07:00",
+                quotes: document.getElementById("qt-list").value.split(/\r?\n/).map(s => s.trim()).filter(Boolean).slice(0, 20)
             };
             try {
                 const res = await apiFetch("/api/box/utilities", { method: "POST", json: { boxId: activeBoxId, utilities: u } });
@@ -1232,13 +1481,24 @@
         }
 
         function setSimView(v) { simView = v; renderSimPreview(); }
-        function cycleSimView() { simView = simView === "clock" ? "calendar" : "clock"; renderSimPreview(); }
+        function cycleSimView() {
+            const order = ["clock", "calendar", "pomodoro", "qr", "heart"];
+            simView = order[(order.indexOf(simView) + 1) % order.length];
+            renderSimPreview();
+        }
+
+        function getLunarText() {
+            try {
+                const fmt = new Intl.DateTimeFormat("vi-VN-u-ca-chinese", { day: "numeric", month: "numeric" });
+                return "Âm lịch: " + fmt.format(new Date());
+            } catch { return ""; }
+        }
 
         function renderSimPreview() {
             const el = document.getElementById("sim-screen");
             if (!el) return;
             const u = getUtil();
-            const clk = u.clock || defaultUtilities().clock;
+            const clk = u.clock;
             if (simView === "clock") {
                 const now = new Date();
                 let hh = now.getHours();
@@ -1248,19 +1508,24 @@
                 const ss = clk.showSeconds !== false ? `<span class="sim-sec">:${String(now.getSeconds()).padStart(2, "0")}${ampm}</span>` : `<span class="sim-sec">${ampm}</span>`;
                 const daysVi = ["Chủ Nhật", "Thứ Hai", "Thứ Ba", "Thứ Tư", "Thứ Năm", "Thứ Sáu", "Thứ Bảy"];
                 const dateStr = clk.showDate !== false ? `${daysVi[now.getDay()]}, ${now.toLocaleDateString("vi-VN")}` : "";
+                const lunarStr = u.lunarHoliday.enabled ? `<div style="font-size:11px; color:#f9a8d4; margin-top:4px;">🏮 ${getLunarText()}</div>` : "";
+                const wStr = (u.weather.enabled && liveWeather) ? `<div style="font-size:11px; color:#7dd3fc; margin-top:6px;">🌤️ ${escapeHtml(u.weather.city)}: ${liveWeather.temp}°C • ${liveWeather.desc}</div>` : "";
+                const quotes = u.morningQuote.quotes || [];
+                const qText = (u.morningQuote.enabled && quotes.length) ? quotes[new Date().getDate() % quotes.length] : "";
                 const nextAlarm = (u.alarms || []).find(a => a.enabled);
-                const alarmHtml = nextAlarm ? `🔔 ${nextAlarm.time} • ${escapeHtml(nextAlarm.label)}` : "🔔 Chưa bật báo thức";
+                const bottomMsg = qText ? `💬 ${escapeHtml(qText)}` : (nextAlarm ? `🔔 ${nextAlarm.time} • ${escapeHtml(nextAlarm.label)}` : "🔔 Chưa bật báo thức");
                 el.innerHTML = `
                     <div class="esp-sim-clock theme-${clk.theme || "love"}">
                         <div style="font-size:12px; opacity:0.85;">${escapeHtml(boxInfo.coupleName || "Anh ❤️ Em")}</div>
                         <div>
                             <div class="sim-time">${hhmm}${ss}</div>
                             <div class="sim-date">${dateStr}</div>
+                            ${lunarStr}${wStr}
                         </div>
-                        <div style="font-size:11px; background:rgba(255,255,255,0.12); padding:6px 8px; border-radius:8px;">${alarmHtml}</div>
+                        <div style="font-size:11px; background:rgba(255,255,255,0.12); padding:6px 8px; border-radius:8px;">${bottomMsg}</div>
                     </div>
                 `;
-            } else {
+            } else if (simView === "calendar") {
                 const events = [...(u.events || [])].sort((a, b) => (a.date + a.time).localeCompare(b.date + b.time)).slice(0, 6);
                 let itemsHtml = events.map(ev => `<div class="sim-cal-item"><strong>${ev.date} ${ev.time || ""}</strong><br>${escapeHtml(ev.title)}</div>`).join("");
                 if (!itemsHtml) itemsHtml = '<div style="color:#94a3b8; font-size:12px; margin-top:40px; text-align:center;">Chưa có lịch hẹn.<br>Hãy thêm hoặc upload file .ics / .csv!</div>';
@@ -1270,9 +1535,162 @@
                         ${itemsHtml}
                     </div>
                 `;
+            } else if (simView === "pomodoro") {
+                const mins = String(u.pomodoro.focusMin || 25).padStart(2, "0");
+                el.innerHTML = `
+                    <div class="esp-sim-clock" style="background:linear-gradient(160deg,#3b0a1a,#111827);">
+                        <div style="font-size:13px; font-weight:700; color:#fca5a5;">🍅 POMODORO FOCUS</div>
+                        <div>
+                            <div class="sim-time" style="font-size:52px;">${mins}:00</div>
+                            <div class="sim-date">${escapeHtml(u.pomodoro.label || "Tập trung")}</div>
+                        </div>
+                        <div style="font-size:11px; opacity:0.8;">Nghỉ ${u.pomodoro.breakMin || 5} phút • Bấm giữ nút để Start</div>
+                    </div>
+                `;
+            } else if (simView === "qr") {
+                const mat = u.qrLink.matrix || (u.qrLink.url ? computeQrMatrix(u.qrLink.url) : "");
+                if (!mat) {
+                    el.innerHTML = '<div class="box-empty">Chưa nhập Link QR.<br>Nhập Spotify/YouTube rồi bấm Tạo Mã QR!</div>';
+                    return;
+                }
+                const [szStr, bits] = mat.split("|");
+                const sz = Number(szStr) || 21;
+                el.innerHTML = `<div class="esp-sim-clock" style="background:#ffffff; color:#111827; padding:16px 12px;">
+                    <div style="font-size:13px; font-weight:800; color:#e11d58;">${escapeHtml(u.qrLink.title || "Quét mã QR")}</div>
+                    <canvas id="sim-qr-canvas" width="180" height="180" style="margin:6px auto; display:block;"></canvas>
+                    <div style="font-size:10px; color:#6b7280;">Giơ camera điện thoại để quét</div>
+                </div>`;
+                const qc = document.getElementById("sim-qr-canvas").getContext("2d");
+                const cell = Math.floor(180 / sz);
+                const pad = Math.floor((180 - cell * sz) / 2);
+                qc.fillStyle = "#ffffff"; qc.fillRect(0, 0, 180, 180);
+                qc.fillStyle = "#111827";
+                for (let r = 0; r < sz; r++) {
+                    for (let c = 0; c < sz; c++) {
+                        if (bits[r * sz + c] === "1") qc.fillRect(pad + c * cell, pad + r * cell, cell, cell);
+                    }
+                }
+            } else if (simView === "heart") {
+                el.innerHTML = `
+                    <div class="esp-sim-clock" style="background:radial-gradient(circle,#be185d,#4c0519);">
+                        <div style="font-size:12px; opacity:0.85;">💓 TÍN HIỆU HAI CHIỀU</div>
+                        <div>
+                            <div style="font-size:74px; line-height:1;">❤️</div>
+                            <div style="font-size:14px; font-weight:700; margin-top:10px;">${escapeHtml(u.heart.msg || "Anh đang nhớ em 💓")}</div>
+                        </div>
+                        <div style="font-size:11px; opacity:0.85;">Bấm đúp nút trên Hộp để gửi tim ngược lại!</div>
+                    </div>
+                `;
             }
         }
         setInterval(() => { if (currentTab === "utilities" && simView === "clock") renderSimPreview(); }, 1000);
+
+        // ===== FEEDBACK SYSTEM (CUSTOMER -> ADMIN) =====
+        const FB_CAT = { feature: "✨ Tính năng", bug: "🐛 Báo lỗi", note: "💌 Góp ý" };
+        const FB_STATUS = { new: "🆕 Chờ Admin đọc", planned: "🛠 Admin đang thêm", done: "✅ Đã hoàn thành" };
+
+        async function submitFeedback() {
+            const category = document.getElementById("fb-category").value;
+            const message = document.getElementById("fb-message").value.trim();
+            if (message.length < 2) { showToast("Vui lòng nhập nội dung góp ý cho Admin!"); return; }
+            const btn = document.getElementById("btn-send-fb");
+            btn.disabled = true;
+            try {
+                const res = await apiFetch("/api/feedback", { method: "POST", json: { category, message } });
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.error || "Lỗi gửi góp ý");
+                document.getElementById("fb-message").value = "";
+                showToast("📨 Đã gửi thẳng tới tài khoản Admin!");
+                await loadMyFeedback();
+                if (session.role === "admin") loadAdminFeedback();
+            } catch (err) {
+                showToast("❌ " + err.message);
+            } finally { btn.disabled = false; }
+        }
+
+        async function loadMyFeedback() {
+            const el = document.getElementById("my-feedback-list");
+            if (!el) return;
+            try {
+                const res = await apiFetch("/api/feedback/mine");
+                const data = await res.json();
+                if (!data.items || data.items.length === 0) {
+                    el.innerHTML = '<div style="color:#9ca3af;">Bạn chưa gửi góp ý nào tới Admin.</div>';
+                    return;
+                }
+                el.innerHTML = "";
+                for (const fb of data.items) {
+                    const div = document.createElement("div");
+                    div.className = "user-row";
+                    const t = new Date(fb.createdAt).toLocaleString("vi-VN");
+                    div.innerHTML = `
+                        <div class="user-row-top">
+                            <strong>${FB_CAT[fb.category] || fb.category}</strong>
+                            <span class="tag ${fb.status === "done" ? "ok" : ""}" style="background:#fdf2f8; color:#be185d;">${FB_STATUS[fb.status] || fb.status}</span>
+                        </div>
+                        <div style="margin-top:6px; font-size:13px;">${escapeHtml(fb.message)}</div>
+                        <div style="font-size:11px; color:#9ca3af; margin-top:4px;">Gửi lúc: ${t}</div>
+                        ${fb.adminReply ? `<div style="margin-top:8px; background:#ecfdf5; border-left:3px solid #10b981; padding:6px 8px; border-radius:6px; font-size:12px; color:#065f46;"><strong>👑 Admin trả lời:</strong> ${escapeHtml(fb.adminReply)}</div>` : ""}
+                    `;
+                    el.appendChild(div);
+                }
+            } catch {}
+        }
+
+        async function loadAdminFeedback() {
+            if (session.role !== "admin") return;
+            const el = document.getElementById("admin-feedback-list");
+            if (!el) return;
+            try {
+                const res = await apiFetch("/api/admin/feedback");
+                const data = await res.json();
+                if (!data.items || data.items.length === 0) {
+                    el.innerHTML = '<div style="color:#6b7280; padding:8px 0;">Chưa có góp ý nào từ khách hàng.</div>';
+                    return;
+                }
+                el.innerHTML = "";
+                for (const fb of data.items) {
+                    const div = document.createElement("div");
+                    div.className = "user-row";
+                    const t = new Date(fb.createdAt).toLocaleString("vi-VN");
+                    div.innerHTML = `
+                        <div class="user-row-top">
+                            <div><strong>👤 ${escapeHtml(fb.username)}</strong> (${fb.boxId}) • ${FB_CAT[fb.category] || fb.category}</div>
+                            <span class="tag ok">${FB_STATUS[fb.status] || fb.status}</span>
+                        </div>
+                        <div style="margin-top:6px; font-size:13px; color:#111827;">${escapeHtml(fb.message)}</div>
+                        <div style="font-size:11px; color:#6b7280; margin-top:4px;">${t}${fb.adminReply ? " • Trả lời: " + escapeHtml(fb.adminReply) : ""}</div>
+                    `;
+                    const acts = document.createElement("div");
+                    acts.className = "user-row-actions";
+                    const b1 = document.createElement("button"); b1.className = "btn-sm"; b1.textContent = "🛠 Đang làm"; b1.onclick = () => adminUpdateFeedback(fb.id, "planned");
+                    const b2 = document.createElement("button"); b2.className = "btn-sm"; b2.textContent = "✅ Đã thêm"; b2.onclick = () => adminUpdateFeedback(fb.id, "done");
+                    const b3 = document.createElement("button"); b3.className = "btn-sm"; b3.textContent = "💬 Trả lời"; b3.onclick = () => adminReplyFeedback(fb.id, fb.status);
+                    const b4 = document.createElement("button"); b4.className = "btn-sm danger"; b4.textContent = "🗑 Xóa"; b4.onclick = () => adminDeleteFeedback(fb.id);
+                    acts.append(b1, b2, b3, b4);
+                    div.appendChild(acts);
+                    el.appendChild(div);
+                }
+            } catch (e) { el.textContent = "Lỗi tải góp ý: " + e.message; }
+        }
+
+        async function adminUpdateFeedback(id, status) {
+            const res = await apiFetch("/api/admin/feedback/update", { method: "POST", json: { id, status } });
+            if (res.ok) { showToast("Đã cập nhật trạng thái góp ý!"); loadAdminFeedback(); }
+        }
+
+        async function adminReplyFeedback(id, curStatus) {
+            const reply = prompt("Nhập phản hồi gửi cho khách hàng:");
+            if (reply === null) return;
+            const res = await apiFetch("/api/admin/feedback/update", { method: "POST", json: { id, status: curStatus === "new" ? "done" : curStatus, adminReply: reply } });
+            if (res.ok) { showToast("💬 Đã gửi phản hồi cho khách!"); loadAdminFeedback(); }
+        }
+
+        async function adminDeleteFeedback(id) {
+            if (!confirm("Xóa góp ý này?")) return;
+            const res = await apiFetch("/api/admin/feedback/delete", { method: "POST", json: { id } });
+            if (res.ok) { showToast("Đã xóa góp ý"); loadAdminFeedback(); }
+        }
 
         // Boot check
         if (session.token) {
